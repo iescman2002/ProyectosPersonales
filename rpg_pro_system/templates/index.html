@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>RPG Avanzado</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body {
+            background: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 50px;
+        }
+
+        #db_status_container {
+            background: #1e1e1e;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: inline-block;
+            border: 1px solid #333;
+            font-size: 0.9em;
+        }
+
+        .skill-tree, .personajes-section {
+            border: 1px solid #333;
+            padding: 20px;
+            background: #1e1e1e;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        /* Estilos para las tarjetas de personajes */
+        .personaje-card {
+            background: #252525;
+            border: 1px solid #444;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .skill {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #444;
+            display: inline-block;
+            background: #252525;
+            border-radius: 4px;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 3px;
+            margin-top: 5px;
+        }
+
+        button:hover { background: #45a049; }
+
+        #log {
+            margin-top: 20px;
+            color: #888;
+            font-family: monospace;
+            background: #000;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="db_status_container">
+        <span id="db_status">⚪ Verificando base de datos...</span>
+    </div>
+
+    <h1>Panel de Control RPG</h1>
+
+    <div class="personajes-section">
+        <h2>Lista de Aventureros</h2>
+        <button onclick="socket.emit('obtener_personajes')">Refrescar Personajes</button>
+        <div id="lista_personajes">
+            <p style="color: #666;">Haz clic en refrescar para cargar datos...</p>
+        </div>
+    </div>
+
+    <div class="skill-tree">
+        <h2>Árbol de Habilidades</h2>
+        <div class="skill">
+            <strong>Corte</strong><br>
+            Nivel: 3/5 <br>
+            <button onclick="socket.emit('mejorar_habilidad', {id: 1})">Subir Nivel</button>
+        </div>
+        <span>➔</span>
+        <div class="skill">
+            <strong>Torbellino</strong><br>
+            Nivel: 0/5 (Requiere Corte Nvl 3) <br>
+            <button onclick="socket.emit('mejorar_habilidad', {id: 2})">Desbloquear</button>
+        </div>
+    </div>
+
+    <div id="log">> Esperando acciones...</div>
+
+    <script>
+        const socket = io();
+
+        socket.on('connect', () => {
+            console.log("Conectado al servidor");
+            socket.emit('comprobar_conexion');
+            // Pedir personajes automáticamente al conectar
+            socket.emit('obtener_personajes');
+        });
+
+        socket.on('db_status', (data) => {
+            const statusElement = document.getElementById('db_status');
+            if (data.connected) {
+                statusElement.innerText = "🟢 Conectado a la base de datos";
+                statusElement.style.color = "#2ecc71";
+            } else {
+                statusElement.innerText = "🔴 Sin conexión a la base de datos";
+                statusElement.style.color = "#e74c3c";
+            }
+        });
+
+        socket.on('personajes', (data) => {
+            console.log("Datos recibidos:", data);
+            const listaContenedor = document.getElementById('lista_personajes');
+
+            if (!listaContenedor) return;
+            listaContenedor.innerHTML = "";
+
+            if (data.length === 0) {
+                listaContenedor.innerHTML = "<p>No hay personajes en la base de datos.</p>";
+                return;
+            }
+
+            data.forEach(personaje => {
+                const card = document.createElement('div');
+                card.className = "personaje-card";
+                card.innerHTML = `
+                    <p><strong>🛡️ ${personaje.nombre}</strong> - Nivel ${personaje.nivel}</p>
+                    <small>💰 Oro: ${personaje.oro} | ❤️ Vida: ${personaje.vida_actual}</small>
+                `;
+                listaContenedor.appendChild(card);
+            });
+        });
+
+        socket.on('status', (data) => {
+            const logElement = document.getElementById('log');
+            logElement.innerText = "> " + data.msg;
+            // Efecto de parpadeo simple para nuevos mensajes
+            logElement.style.borderColor = "#4CAF50";
+            setTimeout(() => logElement.style.borderColor = "#333", 500);
+        });
+
+        socket.on('disconnect', () => {
+            document.getElementById('db_status').innerText = "⚪ Desconectado del servidor";
+            document.getElementById('db_status').style.color = "#888";
+        });
+    </script>
+</body>
+</html>

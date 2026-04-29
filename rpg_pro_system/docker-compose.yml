@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rpg_db
+      POSTGRES_USER: rpguser
+      POSTGRES_PASSWORD: rpgpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      # CORRECCIÓN: Añadimos -d rpg_db para que sepa dónde mirar
+      test: ["CMD-SHELL", "pg_isready -U rpguser -d rpg_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://rpguser:rpgpassword@db:5432/rpg_db
+    # --- NUEVA SECCIÓN DE VOLÚMENES ---
+    volumes:
+      - .:/app  # Mapea el directorio actual (.) al directorio /app del contenedor
+    # ----------------------------------
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
