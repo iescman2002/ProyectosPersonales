@@ -1,9 +1,10 @@
 import os
-from database.ConexionDB import conectar_bd, list_personajes  # importo la conexion de la base de datos
+from database.ConexionDB import conectar_bd  # importo la conexion de la base de datos
+from models.Personaje import obtener_personajes
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, emit
 import psycopg2
-from models import Guerrero, Mago, Personaje
+# from models import Guerrero, Mago, Personaje
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
@@ -13,7 +14,7 @@ def index():
 
 @app.route('/api/personajes')
 def personajes():
-    return jsonify(list_personajes())
+    return jsonify(obtener_personajes())
 
 @socketio.on("comprobar_conexion")
 def probar_conexion():
@@ -33,7 +34,7 @@ def probar_conexion():
 # Crear socket que muestre los personajes:
 @socketio.on('personajes')
 def mostrar_personajes():   # Esta función devolverá una List de los personajes actuales en la BD
-    emit("personajes", list_personajes())
+    emit("personajes", obtener_personajes())
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
