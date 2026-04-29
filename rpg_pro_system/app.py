@@ -1,5 +1,6 @@
 import os
 from database.ConexionDB import conectar_bd  # importo la conexion de la base de datos
+from models.Clase_RPG import obtener_clases
 from models.Personaje import obtener_personajes
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, emit
@@ -12,9 +13,13 @@ socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=
 def index():
     return render_template('index.html')
 
+# CREAR APIS
 @app.route('/api/personajes')
 def personajes():
     return jsonify(obtener_personajes())
+@app.route('/api/clases')
+def clases():
+    return jsonify(obtener_clases())
 
 @socketio.on("comprobar_conexion")
 def probar_conexion():
