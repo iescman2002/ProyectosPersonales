@@ -3,6 +3,7 @@ from database.ConexionDB import conectar_bd  # importo la conexion de la base de
 from models.Clase_RPG import obtener_clases
 from models.Enemigos import obtener_enemigos
 from models.Habilidades import obtener_habilidades
+from models.Inventarios import obtener_inventario
 from models.Personaje import obtener_personajes
 from models.Habilidades_Requisitos import obtener_habilidades_requisitos
 from flask import Flask, render_template, jsonify
@@ -33,6 +34,10 @@ def habilidades():
 @app.route('/api/habilidades_requisitos')
 def habilidades_requisitos():
     return jsonify(obtener_habilidades_requisitos())
+
+@app.route('/api/inventarios')
+def inventarios():
+    return jsonify(obtener_inventario())
 
 @socketio.on("comprobar_conexion")
 def probar_conexion():

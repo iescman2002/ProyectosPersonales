@@ -14,7 +14,7 @@ def obtener_habilidades_requisitos():
             # 2. Usar un segundo 'with' para el cursor (se cierra solo)
             with conexion.cursor() as cursor:
                 cursor.execute(
-                    "SELECT id_habilidad, id_requisito, nivel_requisito_necesario FROM ENEMIGOS")
+                    "SELECT id_habilidad, id_requisito, nivel_requisito_necesario FROM HABILIDADES_REQUISITOS")
                 filas = cursor.fetchall()
                 # 3. Mapeo de filas a objetos y luego a diccionarios (para el emit)
                 for fila in filas:
@@ -34,7 +34,7 @@ def obtener_habilidades_requisitos():
                     }
                     # 4. Lo añadimos a nuestra lista final
                     habilidades_requisitos_data.append(diccionario_hr)
-                print(f"✅ Se han recuperado {len(habilidades_requisitos_data)} enemigos.")
+                print(f"✅ Se han recuperado {len(habilidades_requisitos_data)} habilidades_requisitos.")
         except Exception as e:
-            print(f"❌ Error al consultar los enemigos: {e}")
+            print(f"❌ Error al consultar las habilidades_requisitos: {e}")
     return habilidades_requisitos_data
