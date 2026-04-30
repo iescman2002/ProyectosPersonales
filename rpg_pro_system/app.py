@@ -2,6 +2,7 @@ import os
 from database.ConexionDB import conectar_bd  # importo la conexion de la base de datos
 from models.Clase_RPG import obtener_clases
 from models.Enemigos import obtener_enemigos
+from models.Habilidades import obtener_habilidades
 from models.Personaje import obtener_personajes
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, emit
@@ -24,6 +25,9 @@ def clases():
 @app.route('/api/enemigos')
 def enemigos():
     return jsonify(obtener_enemigos())
+@app.route('/api/habilidades')
+def habilidades():
+    return jsonify(obtener_habilidades())
 
 @socketio.on("comprobar_conexion")
 def probar_conexion():

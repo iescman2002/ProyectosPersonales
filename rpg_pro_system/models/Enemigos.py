@@ -1,5 +1,3 @@
-from pydoc import describe
-
 from database.ConexionDB import conectar_bd
 
 class Enemigos:
