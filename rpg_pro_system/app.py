@@ -10,6 +10,9 @@ from models.Habilidades_Requisitos import obtener_habilidades_requisitos
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, emit
 import psycopg2
+
+from models.logros import obtener_logros
+
 # from models import Guerrero, Mago, Personaje
 
 app = Flask(__name__)
@@ -43,6 +46,10 @@ def inventarios():
 @app.route('/api/items')
 def items():
     return jsonify(obtener_items())
+
+@app.route('/api/logros')
+def logros():
+    return jsonify(obtener_logros())
 
 @socketio.on("comprobar_conexion")
 def probar_conexion():
