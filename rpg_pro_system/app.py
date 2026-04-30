@@ -4,6 +4,7 @@ from models.Clase_RPG import obtener_clases
 from models.Enemigos import obtener_enemigos
 from models.Habilidades import obtener_habilidades
 from models.Personaje import obtener_personajes
+from models.Habilidades_Requisitos import obtener_habilidades_requisitos
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, emit
 import psycopg2
@@ -28,6 +29,10 @@ def enemigos():
 @app.route('/api/habilidades')
 def habilidades():
     return jsonify(obtener_habilidades())
+
+@app.route('/api/habilidades_requisitos')
+def habilidades_requisitos():
+    return jsonify(obtener_habilidades_requisitos())
 
 @socketio.on("comprobar_conexion")
 def probar_conexion():
