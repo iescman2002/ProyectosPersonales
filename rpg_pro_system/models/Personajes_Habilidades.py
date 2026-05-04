@@ -1,7 +1,7 @@
 from database.ConexionDB import conectar_bd
 
 
-class Logros:
+class Personajes_Habilidades:
     def __init__(self, id_personaje,  id_habilidad, nivel_actual, exp_habilidad):
         self.id_personaje = id_personaje
         self.id_habilidad = id_habilidad
@@ -20,22 +20,19 @@ def obtener_personajes_habilidades():
                 # 3. Mapeo de filas a objetos y luego a diccionarios (para el emit)
                 for fila in filas:
                     # 1. Sacamos los dates de la fila uno por uno (por orden)
-                    id = fila[0]
-                    nombre = fila[1]
-                    descripcion = fila[2]
-                    icono = fila[3]
-                    condicion = fila[4]
-
+                    id_personaje = fila[0]
+                    id_habilidad = fila[1]
+                    nivel_actual = fila[2]
+                    exp_habilidad = fila[3]
                     # 2. Creamos el objeto Clase_RPG con esos datos
-                    nuevo_l = Logros(id, nombre, descripcion, icono, condicion)
+                    nuevo_ph = Personajes_Habilidades(id_personaje,  id_habilidad, nivel_actual, exp_habilidad)
                     # 3. Lo convertimos a un "diccionario" (formato clave: valor)
                     # Socket.io no sabe enviar objetos, pero sí sabe enviar diccionarios
                     diccionario_ph = {
-                        "id": id,
-                        "nombre": nombre,
-                        "descripcion": descripcion,
-                        "icono": icono,
-                        "condicion": condicion
+                        "id_personaje": nuevo_ph.id_personaje,
+                        "id_habilidad": nuevo_ph.id_habilidad,
+                        "nivel_actual": nuevo_ph.nivel_actual,
+                        "exp_habilidad": nuevo_ph.exp_habilidad,
                     }
                     # 4. Lo añadimos a nuestra lista final
                     personajes_habilidades_data.append(diccionario_ph)
