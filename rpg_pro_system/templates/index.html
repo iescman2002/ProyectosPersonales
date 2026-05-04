@@ -2,18 +2,58 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>RPG Avanzado</title>
+    <title>RPG Avanzado - Sistema de Habilidades</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
+        :root {
+            --sidebar-width: 250px;
+            --primary-color: #4CAF50;
+            --bg-dark: #121212;
+            --card-bg: #1e1e1e;
+        }
+
         body {
-            background: #121212;
+            background: var(--bg-dark);
             color: #e0e0e0;
-            font-family: 'Segoe UI', sans-serif;
-            padding: 50px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Navegación Lateral */
+        nav {
+            width: var(--sidebar-width);
+            background: #000;
+            padding: 20px;
+            border-right: 1px solid #333;
+            position: fixed;
+            height: 100%;
+        }
+
+        nav h2 { color: var(--primary-color); font-size: 1.2em; }
+
+        .nav-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: #1a1a1a;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+            text-align: center;
+        }
+
+        .nav-item:hover { background: var(--primary-color); color: white; }
+
+        /* Contenedor Principal */
+        main {
+            margin-left: calc(var(--sidebar-width) + 40px);
+            padding: 40px;
+            flex-grow: 1;
         }
 
         #db_status_container {
-            background: #1e1e1e;
+            background: var(--card-bg);
             padding: 10px 20px;
             border-radius: 5px;
             margin-bottom: 20px;
@@ -22,47 +62,62 @@
             font-size: 0.9em;
         }
 
-        .skill-tree, .personajes-section {
-            border: 1px solid #333;
-            padding: 20px;
-            background: #1e1e1e;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        .view-section { display: none; }
+        .view-active { display: block; }
+
+        /* Tarjetas de Personajes */
+        .personaje-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
         }
 
-        /* Estilos para las tarjetas de personajes */
         .personaje-card {
             background: #252525;
             border: 1px solid #444;
             padding: 15px;
-            margin: 10px 0;
             border-radius: 6px;
-            border-left: 4px solid #4CAF50;
+            border-left: 4px solid var(--primary-color);
         }
 
-        .skill {
-            margin: 10px;
-            padding: 10px;
-            border: 1px solid #444;
-            display: inline-block;
-            background: #252525;
+        .personaje-card p { margin: 5px 0; font-size: 0.85em; color: #bbb; }
+
+        /* Sección Habilidades */
+        .habilidad-item {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 10px 0;
             border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #444;
         }
 
         button {
-            background: #4CAF50;
+            background: var(--primary-color);
             color: white;
             border: none;
             padding: 8px 15px;
             cursor: pointer;
             border-radius: 3px;
-            margin-top: 5px;
         }
 
         button:hover { background: #45a049; }
 
+        select {
+            padding: 10px;
+            background: #252525;
+            color: white;
+            border: 1px solid #444;
+            width: 100%;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
         #log {
-            margin-top: 20px;
+            margin-top: 30px;
             color: #888;
             font-family: monospace;
             background: #000;
@@ -74,92 +129,150 @@
 </head>
 <body>
 
-    <div id="db_status_container">
-        <span id="db_status">⚪ Verificando base de datos...</span>
-    </div>
+    <nav>
+        <h2>⚔️ RPG Panel</h2>
+        <div class="nav-item" onclick="showView('inicio')">Menú Principal</div>
+        <div class="nav-item" onclick="showView('mejorar')">Mejorar Habilidad</div>
+    </nav>
 
-    <h1>Panel de Control RPG</h1>
-
-    <div class="personajes-section">
-        <h2>Lista de Aventureros</h2>
-        <button onclick="socket.emit('obtener_personajes')">Refrescar Personajes</button>
-        <div id="lista_personajes">
-            <p style="color: #666;">Haz clic en refrescar para cargar datos...</p>
+    <main>
+        <div id="db_status_container">
+            <span id="db_status">⚪ Verificando base de datos...</span>
         </div>
-    </div>
 
-    <div class="skill-tree">
-        <h2>Árbol de Habilidades</h2>
-        <div class="skill">
-            <strong>Corte</strong><br>
-            Nivel: 3/5 <br>
-            <button onclick="socket.emit('mejorar_habilidad', {id: 1})">Subir Nivel</button>
-        </div>
-        <span>➔</span>
-        <div class="skill">
-            <strong>Torbellino</strong><br>
-            Nivel: 0/5 (Requiere Corte Nvl 3) <br>
-            <button onclick="socket.emit('mejorar_habilidad', {id: 2})">Desbloquear</button>
-        </div>
-    </div>
+        <!-- VISTA: INICIO -->
+        <section id="view-inicio" class="view-section view-active">
+            <h1>Bienvenido al Panel de Control</h1>
+            <p>Selecciona <strong>Mejorar Habilidad</strong> para gestionar tus personajes.</p>
+        </section>
 
-    <div id="log">> Esperando acciones...</div>
+        <!-- VISTA: MEJORAR HABILIDADES -->
+        <section id="view-mejorar" class="view-section">
+            <h1>Gestión de Habilidades</h1>
+
+            <div id="lista_personajes_container">
+                <h3>Lista de Personajes</h3>
+                <div id="personaje_grid" class="personaje-grid"></div>
+            </div>
+
+            <hr style="border: 0.5px solid #333; margin: 30px 0;">
+
+            <div id="seleccion_personaje">
+                <h3>1. Selecciona un personaje para ver sus habilidades</h3>
+                <select id="select-personaje" onchange="seleccionarPersonaje()">
+                    <option value="">-- Carga un personaje --</option>
+                </select>
+
+                <div id="habilidades_container" style="display:none; margin-top: 20px;">
+                    <h3>2. Habilidades Disponibles</h3>
+                    <div id="lista_habilidades"></div>
+                </div>
+            </div>
+        </section>
+
+        <div id="log">> Esperando acciones...</div>
+    </main>
 
     <script>
         const socket = io();
+        let personajeSeleccionadoId = null;
 
+        // --- NAVEGACIÓN ---
+        function showView(viewName) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active'));
+            document.getElementById('view-' + viewName).classList.add('view-active');
+
+            if(viewName === 'mejorar') {
+                socket.emit('personajes');
+            }
+        }
+
+        // --- RECEPCIÓN DE PERSONAJES ---
+        socket.on('personajes', (personajes) => {
+            const grid = document.getElementById('personaje_grid');
+            const select = document.getElementById('select-personaje');
+
+            grid.innerHTML = '';
+            select.innerHTML = '<option value="">-- Elige un personaje --</option>';
+
+            personajes.forEach(p => {
+                grid.innerHTML += `
+                    <div class="personaje-card">
+                        <strong>ID: ${p.id} - ${p.nombre}</strong>
+                        <p>Nivel: ${p.nivel} | Oro: ${p.oro}g</p>
+                        <p>Vida: ${p.vida_actual} | Exp: ${p.exp}</p>
+                        <p><small>Raza ID: ${p.id_raza} | Clase ID: ${p.id_clase}</small></p>
+                    </div>
+                `;
+                select.innerHTML += `<option value="${p.id}">${p.nombre} (ID: ${p.id})</option>`;
+            });
+        });
+
+        // --- SELECCIÓN Y CARGA DE HABILIDADES ---
+        function seleccionarPersonaje() {
+            personajeSeleccionadoId = document.getElementById('select-personaje').value;
+            const container = document.getElementById('habilidades_container');
+
+            if(personajeSeleccionadoId) {
+                container.style.display = 'block';
+                document.getElementById('lista_habilidades').innerHTML = "<p>Cargando habilidades...</p>";
+                // Enviamos el objeto data esperado por el backend
+                socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        socket.on('mostrar_habilidades', (habilidades) => {
+            const container = document.getElementById('lista_habilidades');
+            container.innerHTML = '';
+
+            if (!habilidades || habilidades.length === 0) {
+                container.innerHTML = '<p style="color: #888;">Este personaje no tiene habilidades disponibles.</p>';
+                return;
+            }
+
+            habilidades.forEach(h => {
+                container.innerHTML += `
+                    <div class="habilidad-item">
+                        <div>
+                            <strong>${h.nombre}</strong> <br>
+                            <small>Nivel: ${h.nivel} | ID: ${h.id}</small>
+                        </div>
+                        <button onclick="mejorarHabilidad(${h.id})">Subir Nivel</button>
+                    </div>
+                `;
+            });
+        });
+
+        // --- MEJORAR ---
+        function mejorarHabilidad(idHabilidad) {
+            // Enviamos un solo objeto con ambos IDs
+            socket.emit('mejorar_habilidades', {
+                id_personaje: personajeSeleccionadoId,
+                id_habilidad: idHabilidad
+            });
+        }
+
+        socket.on('mejorar_habilidades', (res) => {
+            alert("Acción realizada con éxito.");
+            // Refrescamos habilidades para ver el nuevo nivel
+            socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
+        });
+
+        // --- SISTEMA ---
         socket.on('connect', () => {
-            console.log("Conectado al servidor");
             socket.emit('comprobar_conexion');
-            // Pedir personajes automáticamente al conectar
-            socket.emit('obtener_personajes');
         });
 
         socket.on('db_status', (data) => {
             const statusElement = document.getElementById('db_status');
-            if (data.connected) {
-                statusElement.innerText = "🟢 Conectado a la base de datos";
-                statusElement.style.color = "#2ecc71";
-            } else {
-                statusElement.innerText = "🔴 Sin conexión a la base de datos";
-                statusElement.style.color = "#e74c3c";
-            }
-        });
-
-        socket.on('personajes', (data) => {
-            console.log("Datos recibidos:", data);
-            const listaContenedor = document.getElementById('lista_personajes');
-
-            if (!listaContenedor) return;
-            listaContenedor.innerHTML = "";
-
-            if (data.length === 0) {
-                listaContenedor.innerHTML = "<p>No hay personajes en la base de datos.</p>";
-                return;
-            }
-
-            data.forEach(personaje => {
-                const card = document.createElement('div');
-                card.className = "personaje-card";
-                card.innerHTML = `
-                    <p><strong>🛡️ ${personaje.nombre}</strong> - Nivel ${personaje.nivel}</p>
-                    <small>💰 Oro: ${personaje.oro} | ❤️ Vida: ${personaje.vida_actual}</small>
-                `;
-                listaContenedor.appendChild(card);
-            });
+            statusElement.innerText = data.connected ? "🟢 Base de Datos: Conectada" : "🔴 Base de Datos: Error";
+            statusElement.style.color = data.connected ? "#2ecc71" : "#e74c3c";
         });
 
         socket.on('status', (data) => {
-            const logElement = document.getElementById('log');
-            logElement.innerText = "> " + data.msg;
-            // Efecto de parpadeo simple para nuevos mensajes
-            logElement.style.borderColor = "#4CAF50";
-            setTimeout(() => logElement.style.borderColor = "#333", 500);
-        });
-
-        socket.on('disconnect', () => {
-            document.getElementById('db_status').innerText = "⚪ Desconectado del servidor";
-            document.getElementById('db_status').style.color = "#888";
+            document.getElementById('log').innerText = "> " + data.msg;
         });
     </script>
 </body>

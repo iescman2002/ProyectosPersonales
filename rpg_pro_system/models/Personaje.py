@@ -1,4 +1,6 @@
 from database.ConexionDB import conectar_bd
+from models.Habilidades import Habilidades
+
 
 class Personaje:
     def __init__(self, id, nombre, nivel, exp, oro, vida_actual, id_raza, id_clase):
@@ -36,6 +38,8 @@ def obtener_personajes():
                     nuevo_p = Personaje(id_db, nombre, nivel, exp, oro, vida, raza, clase)
                     # 3. Lo convertimos a un "diccionario" (formato clave: valor)
                     # Socket.io no sabe enviar objetos, pero sí sabe enviar diccionarios
+
+                    habilidades = Habilidades.mostrar_habilidades_pj(id_db)
                     diccionario_p = {
                         "id": nuevo_p.id,
                         "nombre": nuevo_p.nombre,
@@ -44,7 +48,8 @@ def obtener_personajes():
                         "oro": nuevo_p.oro,
                         "vida_actual": nuevo_p.vida_actual,
                         "id_raza": nuevo_p.id_raza,
-                        "id_clase": nuevo_p.id_clase
+                        "id_clase": nuevo_p.id_clase,
+                        "habilidades": ""
                     }
                     # 4. Lo añadimos a nuestra lista final
                     personajes_data.append(diccionario_p)
