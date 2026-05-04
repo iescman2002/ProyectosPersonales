@@ -12,6 +12,7 @@ from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, emit
 import psycopg2
 
+from models.Razas import obtener_razas
 from models.logros import obtener_logros
 
 # from models import Guerrero, Mago, Personaje
@@ -54,6 +55,9 @@ def personajes():
 @app.route('/api/personajes_habilidades')
 def personajes_habilidades():
     return jsonify(obtener_personajes_habilidades())
+@app.route('/api/razas')
+def razas():
+    return jsonify(obtener_razas())
 
 @socketio.on("comprobar_conexion")
 def probar_conexion():
