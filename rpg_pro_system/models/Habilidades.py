@@ -39,10 +39,10 @@ def obtener_habilidades():
                     "costo_mana": nueva_h.costo_mana,
                     "dano_base": nueva_h.dano_base,
                     "id_clase": nueva_h.id_clase
-                }
+                    }
                 # 4. Lo añadimos a nuestra lista final
-                habilidades_data.append(diccionario_h)
-                print(f"✅ Se han recuperado {len(habilidades_data)} enemigos.")
+                    habilidades_data.append(diccionario_h)
+                    print(f"✅ Se han recuperado {len(habilidades_data)} habilidades.")
         except Exception as e:
             print(f"❌ Error al consultar los enemigos: {e}")
         return habilidades_data
