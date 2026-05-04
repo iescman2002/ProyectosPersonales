@@ -14,6 +14,7 @@ import psycopg2
 
 from models.Razas import obtener_razas
 from models.Registros_Combate import obtener_registros_combate
+from models.Tipos_Item import obtener_tipos_item
 from models.logros import obtener_logros
 
 # from models import Guerrero, Mago, Personaje
@@ -62,6 +63,9 @@ def razas():
 @app.route('/api/registros_combate')
 def registros_combate():
     return jsonify(obtener_registros_combate())
+@app.route('/api/tipos_item')
+def tipos_item():
+    return jsonify(obtener_tipos_item())
 
 @socketio.on("comprobar_conexion")
 def probar_conexion():
