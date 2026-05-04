@@ -5,6 +5,7 @@ from models.Enemigos import obtener_enemigos
 from models.Habilidades import obtener_habilidades
 from models.Inventarios import obtener_inventario
 from models.Items import obtener_items
+from models.Personajes_Habilidades import obtener_personajes_habilidades
 from models.Personaje import obtener_personajes
 from models.Habilidades_Requisitos import obtener_habilidades_requisitos
 from flask import Flask, render_template, jsonify
@@ -22,9 +23,6 @@ def index():
     return render_template('index.html')
 
 # CREAR APIS
-@app.route('/api/personajes')
-def personajes():
-    return jsonify(obtener_personajes())
 @app.route('/api/clases')
 def clases():
     return jsonify(obtener_clases())
@@ -50,6 +48,12 @@ def items():
 @app.route('/api/logros')
 def logros():
     return jsonify(obtener_logros())
+@app.route('/api/personajes')
+def personajes():
+    return jsonify(obtener_personajes())
+@app.route('/api/personajes_habilidades')
+def personajes_habilidades():
+    return jsonify(obtener_personajes_habilidades())
 
 @socketio.on("comprobar_conexion")
 def probar_conexion():
