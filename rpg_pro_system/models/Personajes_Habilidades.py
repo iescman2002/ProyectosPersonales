@@ -9,14 +9,14 @@ class Personajes_Habilidades:
         self.nivel_actual = nivel_actual
         self.exp_habilidad = exp_habilidad
 
-    def obtener_personajes_habilidades(self):
+    @classmethod
+    def obtener_personajes_habilidades(cls):
         personajes_habilidades_data = []  # Lista vacía para guardar los diccionarios
         with ConexionDB.conectar_bd() as conexion:
             try:
                 # 2. Usar un segundo 'with' para el cursor (se cierra solo)
                 with conexion.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT id_personaje,  id_habilidad, nivel_actual, exp_habilidad FROM PERSONAJES_HABILIDADES")
+                    cursor.execute("SELECT id_personaje, id_habilidad, nivel_actual, exp_habilidad FROM PERSONAJES_HABILIDADES")
                     filas = cursor.fetchall()
                     # 3. Mapeo de filas a objetos y luego a diccionarios (para el emit)
                     for fila in filas:
@@ -42,36 +42,39 @@ class Personajes_Habilidades:
                 print(f"❌ Error al consultar los personajes_habilidades: {e}")
         return personajes_habilidades_data
 
-    def mostrar_habilidades_pj(self, id_personaje):
-        ids_habilidades_pj = []
-        habilidades_pj = []
+    @classmethod
+    def mostrar_habilidades_pj(cls, id_personaje):
+        diccionario_habilidades_pj = []
         with ConexionDB.conectar_bd() as conexion:
             # Obtener id_habilidad
             try:
                 # 2. Usar un segundo 'with' para el cursor (se cierra solo)
                 with conexion.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT id_habilidad FROM PERSONAJES_HABILIDADES WHERE id_personaje = %s", id_personaje)
+                    cursor.execute("SELECT id_habilidad, nivel_actual FROM PERSONAJES_HABILIDADES WHERE id_personaje = %s", (id_personaje,))
                     filas = cursor.fetchall()
                     for fila in filas:
                         id_habilidad= fila[0]
-                        ids_habilidades_pj.append(id_habilidad)
-                    for id_habilidad in ids_habilidades_pj:
-                        habilidades_pj.append(Habilidades().mostrar_habilidad(id_habilidad))
-                return habilidades_pj
+                        nivel_actual = fila[1]
+                        habilidad = Habilidades.mostrar_habilidad(id_habilidad)
+                        if habilidad: # Si la habilidad existe
+                            habilidad["nivel_actual"] = nivel_actual # Añado en el diccionario como nivel actual el nivel actual
+                        diccionario_habilidades_pj.append(habilidad)
+                return diccionario_habilidades_pj
             except:
                 print("Error al obtener el id_habilidad")
 
-    def mejorar_habilidad_pj(self,id_personaje, id_habilidad):
+    @classmethod
+    def mejorar_habilidad_pj(cls,id_personaje, id_habilidad):
         # Obtener el nivel actual de la habilidad
-        nivel_habilidad_actual = self.obtenerNivelHabilidadActual(id_personaje, id_habilidad)
+        nivel_habilidad_actual = cls.obtenerNivelHabilidadActual(id_personaje, id_habilidad)
         # Verificar que al subir 1 nivel a la habilidad, no supere el nivel maximo
-        if self.verificarNivelMaximo(nivel_habilidad_actual, id_habilidad):
-            self.subirNivelHabilidad(id_personaje, id_habilidad)
+        if cls.verificarNivelMaximo(nivel_habilidad_actual, id_habilidad):
+            cls.subirNivelHabilidad(id_personaje, id_habilidad)
         else:
             print("No se ha podido mejorar la habilidad, la habilidad está a nivel maximo")
 
-    def obtenerNivelHabilidadActual(self,id_personaje, id_habilidad):
+    @classmethod
+    def obtenerNivelHabilidadActual(cls,id_personaje, id_habilidad):
         with ConexionDB.conectar_bd() as conexion:
             try:
                 with conexion.cursor() as cursor:
@@ -83,7 +86,8 @@ class Personajes_Habilidades:
             except Exception as e:
                 print(f"Error al obtener el nivel actual de la habilidad: {e}")
 
-    def verificarNivelMaximo(self, nivel_actual, id_habilidad):
+    @classmethod
+    def verificarNivelMaximo(cls, nivel_actual, id_habilidad):
         with ConexionDB.conectar_bd() as conexion:
             try:
                 with conexion.cursor() as cursor:
@@ -95,7 +99,8 @@ class Personajes_Habilidades:
             except:
                 print("Error al obtener el nivel maximo de la habilidad")
 
-    def subirNivelHabilidad(self, id_personaje, id_habilidad):
+    @classmethod
+    def subirNivelHabilidad(cls, id_personaje, id_habilidad):
         with ConexionDB.conectar_bd() as conexion:
             try:
                 with conexion.cursor() as cursor:

@@ -10,9 +10,10 @@ class Habilidades:
         self.costo_mana = costo_mana
         self.dano_base = dano_base
         self.id_clase = id_clase
-    def obtener_habilidades(self):
+    @classmethod
+    def obtener_habilidades(cls):
         habilidades_data = []  # Lista vacía para guardar los diccionarios
-        with ConexionDB.conectar_bd() as conexion:
+        with conectar_bd() as conexion:
             try:
                 # 2. Usar un segundo 'with' para el cursor (se cierra solo)
                 with conexion.cursor() as cursor:
@@ -46,13 +47,13 @@ class Habilidades:
             except Exception as e:
                 print(f"❌ Error al consultar los enemigos: {e}")
             return habilidades_data
-
-    def mostrar_habilidad(self, id_habilidad):
-        with ConexionDB.conectar_bd() as conexion:
+    @classmethod
+    def mostrar_habilidad(cls, id_habilidad):
+        with conectar_bd() as conexion:
             try:
                 # 2. Usar un segundo 'with' para el cursor (se cierra solo)
                 with conexion.cursor() as cursor:
-                    cursor.execute("SELECT id, nombre, descripcion, tipo, nivel_maximo, costo_mana, dano_base, id_clase FROM HABILIDADES WHERE id=%s", id_habilidad)
+                    cursor.execute("SELECT id, nombre, descripcion, tipo, nivel_maximo, costo_mana, dano_base, id_clase FROM HABILIDADES WHERE id=%s", (id_habilidad,))
                     fila = cursor.fetchall()[0]
                     id = fila[0]
                     nombre = fila[1]
@@ -63,6 +64,17 @@ class Habilidades:
                     dano_base = fila[6]
                     id_clase = fila[7]
                     habilidad = Habilidades(id, nombre, descripcion, tipo, nivel_maximo, costo_mana, dano_base, id_clase)
-                    return habilidad
+                    # Transformo a diccionario la habilidad para tener despues la lista de habilidades como un diccionario y poder trabajar con el
+                    diccionario_habilidad = {
+                        "id": habilidad.id,
+                        "nombre": habilidad.nombre,
+                        "descripcion": habilidad.descripcion,
+                        "tipo": habilidad.tipo,
+                        "nivel_maximo": habilidad.nivel_maximo,
+                        "costo_mana": habilidad.costo_mana,
+                        "dano_base": habilidad.dano_base,
+                        "id_clase": habilidad.id_clase
+                    }
+                    return diccionario_habilidad
             except Exception as e:
                 print(f'Error al obtener la habilidad: {e}')
