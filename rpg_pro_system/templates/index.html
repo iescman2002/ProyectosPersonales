@@ -255,9 +255,13 @@
         }
 
         socket.on('mejorar_habilidades', (res) => {
-            alert("Acción realizada con éxito.");
-            // Refrescamos habilidades para ver el nuevo nivel
-            socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
+        if (res) {
+                alert("¡Habilidad mejorada con éxito!");
+                // Refrescamos habilidades solo si hubo éxito
+                socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
+            } else {
+                alert("No se pudo mejorar: La habilidad ya está al nivel máximo.");
+            }
         });
 
         // --- SISTEMA ---

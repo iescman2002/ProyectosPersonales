@@ -58,31 +58,36 @@ class Personajes_Habilidades:
                         habilidad = Habilidades.mostrar_habilidad(id_habilidad)
                         if habilidad: # Si la habilidad existe
                             habilidad["nivel_actual"] = nivel_actual # Añado en el diccionario como nivel actual el nivel actual
-                        diccionario_habilidades_pj.append(habilidad)
+                            diccionario_habilidades_pj.append(habilidad)
                 return diccionario_habilidades_pj
             except:
                 print("Error al obtener el id_habilidad")
 
     @classmethod
     def mejorar_habilidad_pj(cls,id_personaje, id_habilidad):
+        id_personaje = int(id_personaje)
+        id_habilidad = int(id_habilidad)
         # Obtener el nivel actual de la habilidad
         nivel_habilidad_actual = cls.obtenerNivelHabilidadActual(id_personaje, id_habilidad)
         # Verificar que al subir 1 nivel a la habilidad, no supere el nivel maximo
-        if cls.verificarNivelMaximo(nivel_habilidad_actual, id_habilidad):
-            cls.subirNivelHabilidad(id_personaje, id_habilidad)
-        else:
-            print("No se ha podido mejorar la habilidad, la habilidad está a nivel maximo")
+        if nivel_habilidad_actual is not None:
+            if cls.verificarNivelMaximo(nivel_habilidad_actual, id_habilidad):
+                cls.subirNivelHabilidad(id_personaje, id_habilidad)
+                return True # Mando verdadero como que si he mejorado la habilidad
+            else:
+                print("No se ha podido mejorar la habilidad, la habilidad está a nivel maximo")
+                return False # Mando falso no he podido mejorar la habilidad
 
     @classmethod
-    def obtenerNivelHabilidadActual(cls,id_personaje, id_habilidad):
+    def obtenerNivelHabilidadActual(cls,id_personaje, id_habilidad) -> int | None:
         with ConexionDB.conectar_bd() as conexion:
             try:
                 with conexion.cursor() as cursor:
                     cursor.execute(
                         'SELECT nivel_actual FROM PERSONAJES_HABILIDADES WHERE id_personaje = %s AND id_habilidad = %s',(id_personaje, id_habilidad)
                     )
-                    nivel_habilidad_actual = cursor.fetchall()[0]
-                    return nivel_habilidad_actual
+                    nivel_habilidad_actual = cursor.fetchone()
+                    return nivel_habilidad_actual[0] # Devuelve la primera tupla
             except Exception as e:
                 print(f"Error al obtener el nivel actual de la habilidad: {e}")
 
@@ -92,10 +97,10 @@ class Personajes_Habilidades:
             try:
                 with conexion.cursor() as cursor:
                     cursor.execute(
-                        'SELECT nivel_maximo FROM HABILIDADES WHERE id_habilidad = %s', (id_habilidad)
+                        'SELECT nivel_maximo FROM HABILIDADES WHERE id = %s', (id_habilidad,)
                     )
-                nivel_maximo = cursor.fetchall()[0]
-                return nivel_actual + 1 >= nivel_maximo # Si al subir de nivel la habilidad no supera el nivel maximo devuelve True sino False
+                    nivel_maximo = cursor.fetchone()
+                    return nivel_actual + 1 <= nivel_maximo[0] # Si al subir de nivel la habilidad no supera el nivel maximo devuelve True sino False
             except:
                 print("Error al obtener el nivel maximo de la habilidad")
 
@@ -108,6 +113,6 @@ class Personajes_Habilidades:
                         'UPDATE PERSONAJES_HABILIDADES SET nivel_actual = nivel_actual + 1 WHERE id_personaje = %s AND id_habilidad = %s', (id_personaje, id_habilidad)
                     )
                     conexion.commit()
-                    print("Habilidad subida de nivel")
+                print("Habilidad subida de nivel")
             except Exception as e:
                 print(f"Error al subir el nivel de la habilidad: {e}")

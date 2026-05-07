@@ -88,8 +88,8 @@ def mostrar_habilidades(data):
 
 @socketio.on('mejorar_habilidades')
 def mejorar_habilidades(data):
-    id_pj = data.get('id_personaje')
-    id_hab = data.get('id_habilidad')
+    id_pj = int(data.get('id_personaje'))
+    id_hab = int(data.get('id_habilidad'))
     emit("mejorar_habilidades", Personajes_Habilidades.mejorar_habilidad_pj(id_pj, id_hab))
 
 if __name__ == '__main__':
