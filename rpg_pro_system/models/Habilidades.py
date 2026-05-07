@@ -78,3 +78,10 @@ class Habilidades:
                     return diccionario_habilidad
             except Exception as e:
                 print(f'Error al obtener la habilidad: {e}')
+    @classmethod
+    def es_habilidad_avanzada(cls, id_habilidad):
+        with conectar_bd() as conexion:
+            with conexion.cursor() as cursor:
+                # Si el id se encuentra en la tabla HABILIDADES_REQUISITOS, entonces es una habilidad avanzada
+                cursor.execute("SELECT 1 FROM HABILIDADES_REQUISITOS WHERE id_habilidad = %s", (id_habilidad,))
+                return cursor.fetchone() is not None # Devuelve true si se ha encontrado el id y false si no.

@@ -39,3 +39,17 @@ class Habilidades_Requisitos:
             except Exception as e:
                 print(f"❌ Error al consultar las habilidades_requisitos: {e}")
         return habilidades_requisitos_data
+
+    @classmethod
+    def desbloquearHabilidad(cls, id_habilidad):
+        # METODO EN CONSTRUCCION / A MEDIAS / INCOMPLETO
+        with conectar_bd() as conexion:
+            try:
+                with conexion.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT id_requisito, nivel_requisito_necesario FROM HABILIDADES_REQUISITOS WHERE id_habilidad = %s",
+                        (id_habilidad,))
+                    filas = cursor.fetchall()
+                    return filas
+            except:
+                return None

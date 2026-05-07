@@ -85,15 +85,19 @@ class Personajes_Habilidades:
         id_habilidad = int(id_habilidad)
         # Obtener el nivel actual de la habilidad
         nivel_habilidad_actual = cls.obtenerNivelHabilidadActual(id_personaje, id_habilidad)
-        # Verificar que al subir 1 nivel a la habilidad, no supere el nivel maximo
+    # 1era verificación: Que el nivel de la habilidad sea menor al nivel maximo de la habilidad
         if nivel_habilidad_actual is not None:
-            if cls.verificarNivelMaximo(nivel_habilidad_actual, id_habilidad):
-                cls.subirNivelHabilidad(id_personaje, id_habilidad)
-                return True # Mando verdadero como que si he mejorado la habilidad
-            else:
-                print("No se ha podido mejorar la habilidad, la habilidad está a nivel maximo")
-                return False # Mando falso no he podido mejorar la habilidad
-
+            if cls.verificarNivelMaximoHabilidad(nivel_habilidad_actual, id_habilidad):
+        # Verificar si la habilidad es avanzada o no
+                if Habilidades.es_habilidad_avanzada(id_habilidad):
+                    print("en construcción")
+        # Si la Habilidad no es avanzada, basta solo con comprobar que la habilidad no supere al nivel máximo.
+                else:
+                    cls.subirNivelHabilidad(id_personaje, id_habilidad)
+                    return True # Mando verdadero como que si he mejorado la habilidad
+        else:
+            print("No se ha podido mejorar la habilidad, la habilidad está a nivel maximo")
+            return False # Mando falso no he podido mejorar la habilidad
     @classmethod
     def obtenerNivelHabilidadActual(cls,id_personaje, id_habilidad) -> int | None:
         with conectar_bd() as conexion:
@@ -108,7 +112,7 @@ class Personajes_Habilidades:
                 print(f"Error al obtener el nivel actual de la habilidad: {e}")
 
     @classmethod
-    def verificarNivelMaximo(cls, nivel_actual, id_habilidad):
+    def verificarNivelMaximoHabilidad(cls, nivel_actual, id_habilidad):
         with conectar_bd() as conexion:
             try:
                 with conexion.cursor() as cursor:
