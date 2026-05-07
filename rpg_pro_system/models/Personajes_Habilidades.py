@@ -1,5 +1,6 @@
-from database import ConexionDB
+from database.ConexionDB import conectar_bd
 from models.Habilidades import Habilidades
+from models.Habilidades_Requisitos import Habilidades_Requisitos
 
 
 class Personajes_Habilidades:
@@ -12,11 +13,16 @@ class Personajes_Habilidades:
     @classmethod
     def obtener_personajes_habilidades(cls):
         personajes_habilidades_data = []  # Lista vacía para guardar los diccionarios
-        with ConexionDB.conectar_bd() as conexion:
+        with conectar_bd() as conexion:
             try:
                 # 2. Usar un segundo 'with' para el cursor (se cierra solo)
                 with conexion.cursor() as cursor:
-                    cursor.execute("SELECT id_personaje, id_habilidad, nivel_actual, exp_habilidad FROM PERSONAJES_HABILIDADES")
+                    cursor.execute("""
+                        SELECT ph.id_personaje, ph.id_habilidad, ph.nivel_actual, ph.exp_habilidad, 
+                               hr.id_habilidad
+                        FROM PERSONAJES_HABILIDADES ph
+                        LEFT JOIN HABILIDADES_REQUISITOS hr ON ph.id_habilidad = hr.id_habilidad
+                    """)
                     filas = cursor.fetchall()
                     # 3. Mapeo de filas a objetos y luego a diccionarios (para el emit)
                     for fila in filas:
@@ -25,8 +31,9 @@ class Personajes_Habilidades:
                         id_habilidad = fila[1]
                         nivel_actual = fila[2]
                         exp_habilidad = fila[3]
+                        habilidad_avanzada = fila[4] is not None # Pone true si existe y false si no
                         # 2. Creamos el objeto Clase_RPG con esos datos
-                        nuevo_ph = Personajes_Habilidades(id_personaje,  id_habilidad, nivel_actual, exp_habilidad)
+                        nuevo_ph = Personajes_Habilidades(id_personaje, id_habilidad, nivel_actual, exp_habilidad)
                         # 3. Lo convertimos a un "diccionario" (formato clave: valor)
                         # Socket.io no sabe enviar objetos, pero sí sabe enviar diccionarios
                         diccionario_ph = {
@@ -34,10 +41,12 @@ class Personajes_Habilidades:
                             "id_habilidad": nuevo_ph.id_habilidad,
                             "nivel_actual": nuevo_ph.nivel_actual,
                             "exp_habilidad": nuevo_ph.exp_habilidad,
+                            # Comprobar si la habilidad del personaje es avanzada o no (True o false)
+                            "habilidad_avanzada": habilidad_avanzada
                         }
                         # 4. Lo añadimos a nuestra lista final
                         personajes_habilidades_data.append(diccionario_ph)
-                        print(f"✅ Se han recuperado {len(personajes_habilidades_data)} personajes_habilidades.")
+                    print(f"✅ Se han recuperado {len(personajes_habilidades_data)} personajes_habilidades.")
             except Exception as e:
                 print(f"❌ Error al consultar los personajes_habilidades: {e}")
         return personajes_habilidades_data
@@ -45,7 +54,7 @@ class Personajes_Habilidades:
     @classmethod
     def mostrar_habilidades_pj(cls, id_personaje):
         diccionario_habilidades_pj = []
-        with ConexionDB.conectar_bd() as conexion:
+        with conectar_bd() as conexion:
             # Obtener id_habilidad
             try:
                 # 2. Usar un segundo 'with' para el cursor (se cierra solo)
@@ -80,7 +89,7 @@ class Personajes_Habilidades:
 
     @classmethod
     def obtenerNivelHabilidadActual(cls,id_personaje, id_habilidad) -> int | None:
-        with ConexionDB.conectar_bd() as conexion:
+        with conectar_bd() as conexion:
             try:
                 with conexion.cursor() as cursor:
                     cursor.execute(
@@ -93,7 +102,7 @@ class Personajes_Habilidades:
 
     @classmethod
     def verificarNivelMaximo(cls, nivel_actual, id_habilidad):
-        with ConexionDB.conectar_bd() as conexion:
+        with conectar_bd() as conexion:
             try:
                 with conexion.cursor() as cursor:
                     cursor.execute(
@@ -106,7 +115,7 @@ class Personajes_Habilidades:
 
     @classmethod
     def subirNivelHabilidad(cls, id_personaje, id_habilidad):
-        with ConexionDB.conectar_bd() as conexion:
+        with conectar_bd() as conexion:
             try:
                 with conexion.cursor() as cursor:
                     cursor.execute(
