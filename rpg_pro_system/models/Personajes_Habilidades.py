@@ -59,14 +59,21 @@ class Personajes_Habilidades:
             try:
                 # 2. Usar un segundo 'with' para el cursor (se cierra solo)
                 with conexion.cursor() as cursor:
-                    cursor.execute("SELECT id_habilidad, nivel_actual FROM PERSONAJES_HABILIDADES WHERE id_personaje = %s", (id_personaje,))
+                    cursor.execute("""
+                        SELECT ph.id_habilidad, ph.nivel_actual, hr.id_habilidad
+                        FROM PERSONAJES_HABILIDADES ph
+                        LEFT JOIN HABILIDADES_REQUISITOS hr ON ph.id_habilidad = hr.id_habilidad
+                       WHERE ph.id_personaje = %s
+                       """, (id_personaje,))
                     filas = cursor.fetchall()
                     for fila in filas:
                         id_habilidad= fila[0]
                         nivel_actual = fila[1]
+                        habilidad_avanzada = fila[2] is not None
                         habilidad = Habilidades.mostrar_habilidad(id_habilidad)
                         if habilidad: # Si la habilidad existe
                             habilidad["nivel_actual"] = nivel_actual # Añado en el diccionario como nivel actual el nivel actual
+                            habilidad["habilidad_avanzada"] = habilidad_avanzada
                             diccionario_habilidades_pj.append(habilidad)
                 return diccionario_habilidades_pj
             except:

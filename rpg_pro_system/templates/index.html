@@ -21,7 +21,6 @@
             min-height: 100vh;
         }
 
-        /* Navegación Lateral */
         nav {
             width: var(--sidebar-width);
             background: #000;
@@ -45,7 +44,6 @@
 
         .nav-item:hover { background: var(--primary-color); color: white; }
 
-        /* Contenedor Principal */
         main {
             margin-left: calc(var(--sidebar-width) + 40px);
             padding: 40px;
@@ -65,7 +63,6 @@
         .view-section { display: none; }
         .view-active { display: block; }
 
-        /* Tarjetas de Personajes */
         .personaje-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -83,7 +80,6 @@
 
         .personaje-card p { margin: 5px 0; font-size: 0.85em; color: #bbb; }
 
-        /* Sección Habilidades */
         .habilidad-item {
             background: #2a2a2a;
             padding: 15px;
@@ -94,10 +90,6 @@
             align-items: center;
             border: 1px solid #444;
         }
-
-        .habilidad-info { max-width: 70%; }
-        .habilidad-tipo { color: var(--primary-color); font-weight: bold; font-size: 0.8em; text-transform: uppercase; }
-        .habilidad-desc { color: #888; font-style: italic; display: block; margin-top: 5px; }
 
         button {
             background: var(--primary-color);
@@ -150,13 +142,11 @@
             <span id="db_status">⚪ Verificando base de datos...</span>
         </div>
 
-        <!-- VISTA: INICIO -->
         <section id="view-inicio" class="view-section view-active">
             <h1>Bienvenido al Panel de Control</h1>
             <p>Selecciona <strong>Mejorar Habilidad</strong> para gestionar tus personajes.</p>
         </section>
 
-        <!-- VISTA: MEJORAR HABILIDADES -->
         <section id="view-mejorar" class="view-section">
             <h1>Gestión de Habilidades</h1>
 
@@ -190,9 +180,7 @@
         function showView(viewName) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active'));
             document.getElementById('view-' + viewName).classList.add('view-active');
-            if(viewName === 'mejorar') {
-                socket.emit('personajes');
-            }
+            if(viewName === 'mejorar') socket.emit('personajes');
         }
 
         socket.on('personajes', (personajes) => {
@@ -216,7 +204,7 @@
         function seleccionarPersonaje() {
             personajeSeleccionadoId = document.getElementById('select-personaje').value;
             const container = document.getElementById('habilidades_container');
-            if(personajeSeleccionadoId) {
+            if(personajeSeleccionadoId){
                 container.style.display = 'block';
                 document.getElementById('lista_habilidades').innerHTML = "<p>Cargando habilidades...</p>";
                 socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
@@ -225,26 +213,24 @@
             }
         }
 
-        // --- MODIFICACIÓN: MOSTRAR ID, TIPO Y DESCRIPCIÓN ---
         socket.on('mostrar_habilidades', (habilidades) => {
             const container = document.getElementById('lista_habilidades');
             container.innerHTML = '';
-
-            if (!habilidades || habilidades.length === 0) {
+            if(!habilidades || habilidades.length === 0){
                 container.innerHTML = '<p style="color: #888;">Este personaje no tiene habilidades disponibles.</p>';
                 return;
             }
-
             habilidades.forEach(h => {
-                const bloqueado = h.habilidad_avanzada === true;
-
+                const bloqueado = h.habilidad_avanzada === true; // true si es avanzada
                 container.innerHTML += `
                     <div class="habilidad-item">
-                        <div class="habilidad-info">
-                            <span class="habilidad-tipo">Tipo: ${h.tipo || 'General'}</span><br>
-                            <strong>ID: ${h.id} - ${h.nombre}</strong>
-                            <small>(Nivel: ${h.nivel_actual} / ${h.nivel_maximo})</small>
-                            <span class="habilidad-desc">${h.descripcion || 'Sin descripción disponible.'}</span>
+                        <div>
+                            <strong>${h.nombre}</strong><br>
+                            <small>
+                                Nivel: ${h.nivel_actual} / ${h.nivel_maximo} | ID: ${h.id}<br>
+                                Tipo: ${h.tipo || "Desconocido"}<br>
+                                Descripción: ${h.descripcion || "Sin descripción"}
+                            </small>
                         </div>
                         <button ${bloqueado ? 'disabled' : ''} onclick="mejorarHabilidad(${h.id})">
                             ${bloqueado ? 'Bloqueado' : 'Subir Nivel'}
@@ -254,7 +240,7 @@
             });
         });
 
-        function mejorarHabilidad(idHabilidad) {
+        function mejorarHabilidad(idHabilidad){
             socket.emit('mejorar_habilidades', {
                 id_personaje: personajeSeleccionadoId,
                 id_habilidad: idHabilidad
@@ -262,20 +248,22 @@
         }
 
         socket.on('mejorar_habilidades', (res) => {
-            if (res) {
+            if(res){
                 alert("¡Habilidad mejorada con éxito!");
                 socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
             } else {
-                alert("No se pudo mejorar: La habilidad ya está al nivel máximo o falta oro/exp.");
+                alert("No se pudo mejorar: La habilidad ya está al nivel máximo.");
             }
         });
 
         socket.on('connect', () => { socket.emit('comprobar_conexion'); });
+
         socket.on('db_status', (data) => {
             const statusElement = document.getElementById('db_status');
             statusElement.innerText = data.connected ? "🟢 Base de Datos: Conectada" : "🔴 Base de Datos: Error";
             statusElement.style.color = data.connected ? "#2ecc71" : "#e74c3c";
         });
+
         socket.on('status', (data) => { document.getElementById('log').innerText = "> " + data.msg; });
     </script>
 </body>
