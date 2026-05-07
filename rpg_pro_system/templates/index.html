@@ -95,6 +95,10 @@
             border: 1px solid #444;
         }
 
+        .habilidad-info { max-width: 70%; }
+        .habilidad-tipo { color: var(--primary-color); font-weight: bold; font-size: 0.8em; text-transform: uppercase; }
+        .habilidad-desc { color: #888; font-style: italic; display: block; margin-top: 5px; }
+
         button {
             background: var(--primary-color);
             color: white;
@@ -105,6 +109,12 @@
         }
 
         button:hover { background: #45a049; }
+
+        button:disabled {
+            background: #555 !important;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
 
         select {
             padding: 10px;
@@ -177,24 +187,19 @@
         const socket = io();
         let personajeSeleccionadoId = null;
 
-        // --- NAVEGACIÓN ---
         function showView(viewName) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active'));
             document.getElementById('view-' + viewName).classList.add('view-active');
-
             if(viewName === 'mejorar') {
                 socket.emit('personajes');
             }
         }
 
-        // --- RECEPCIÓN DE PERSONAJES ---
         socket.on('personajes', (personajes) => {
             const grid = document.getElementById('personaje_grid');
             const select = document.getElementById('select-personaje');
-
             grid.innerHTML = '';
             select.innerHTML = '<option value="">-- Elige un personaje --</option>';
-
             personajes.forEach(p => {
                 grid.innerHTML += `
                     <div class="personaje-card">
@@ -208,21 +213,19 @@
             });
         });
 
-        // --- SELECCIÓN Y CARGA DE HABILIDADES ---
         function seleccionarPersonaje() {
             personajeSeleccionadoId = document.getElementById('select-personaje').value;
             const container = document.getElementById('habilidades_container');
-
             if(personajeSeleccionadoId) {
                 container.style.display = 'block';
                 document.getElementById('lista_habilidades').innerHTML = "<p>Cargando habilidades...</p>";
-                // Enviamos el objeto data esperado por el backend
                 socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
             } else {
                 container.style.display = 'none';
             }
         }
 
+        // --- MODIFICACIÓN: MOSTRAR ID, TIPO Y DESCRIPCIÓN ---
         socket.on('mostrar_habilidades', (habilidades) => {
             const container = document.getElementById('lista_habilidades');
             container.innerHTML = '';
@@ -233,21 +236,25 @@
             }
 
             habilidades.forEach(h => {
+                const bloqueado = h.habilidad_avanzada === true;
+
                 container.innerHTML += `
                     <div class="habilidad-item">
-                        <div>
-                            <strong>${h.nombre}</strong> <br>
-                            <small>Nivel: ${h.nivel_actual} / ${h.nivel_maximo} | ID: ${h.id}</small>
+                        <div class="habilidad-info">
+                            <span class="habilidad-tipo">Tipo: ${h.tipo || 'General'}</span><br>
+                            <strong>ID: ${h.id} - ${h.nombre}</strong>
+                            <small>(Nivel: ${h.nivel_actual} / ${h.nivel_maximo})</small>
+                            <span class="habilidad-desc">${h.descripcion || 'Sin descripción disponible.'}</span>
                         </div>
-                        <button onclick="mejorarHabilidad(${h.id})">Subir Nivel</button>
+                        <button ${bloqueado ? 'disabled' : ''} onclick="mejorarHabilidad(${h.id})">
+                            ${bloqueado ? 'Bloqueado' : 'Subir Nivel'}
+                        </button>
                     </div>
                 `;
             });
         });
 
-        // --- MEJORAR ---
         function mejorarHabilidad(idHabilidad) {
-            // Enviamos un solo objeto con ambos IDs
             socket.emit('mejorar_habilidades', {
                 id_personaje: personajeSeleccionadoId,
                 id_habilidad: idHabilidad
@@ -255,29 +262,21 @@
         }
 
         socket.on('mejorar_habilidades', (res) => {
-        if (res) {
+            if (res) {
                 alert("¡Habilidad mejorada con éxito!");
-                // Refrescamos habilidades solo si hubo éxito
                 socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
             } else {
-                alert("No se pudo mejorar: La habilidad ya está al nivel máximo.");
+                alert("No se pudo mejorar: La habilidad ya está al nivel máximo o falta oro/exp.");
             }
         });
 
-        // --- SISTEMA ---
-        socket.on('connect', () => {
-            socket.emit('comprobar_conexion');
-        });
-
+        socket.on('connect', () => { socket.emit('comprobar_conexion'); });
         socket.on('db_status', (data) => {
             const statusElement = document.getElementById('db_status');
             statusElement.innerText = data.connected ? "🟢 Base de Datos: Conectada" : "🔴 Base de Datos: Error";
             statusElement.style.color = data.connected ? "#2ecc71" : "#e74c3c";
         });
-
-        socket.on('status', (data) => {
-            document.getElementById('log').innerText = "> " + data.msg;
-        });
+        socket.on('status', (data) => { document.getElementById('log').innerText = "> " + data.msg; });
     </script>
 </body>
 </html>
