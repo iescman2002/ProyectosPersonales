@@ -51,6 +51,9 @@ def personajes():
 @app.route('/api/personajes_habilidades')
 def personajes_habilidades():
     return jsonify(Personajes_Habilidades.obtener_personajes_habilidades())
+@app.route('/api/personajes_logros')
+def personajes_logros():
+    return jsonify(Personajes_Logros.obtener_personajes_logros())
 @app.route('/api/razas')
 def razas():
     return jsonify(Razas.obtener_razas())
@@ -91,6 +94,17 @@ def mejorar_habilidades(data):
     id_pj = int(data.get('id_personaje'))
     id_hab = int(data.get('id_habilidad'))
     emit("mejorar_habilidades", Personajes_Habilidades.mejorar_habilidad_pj(id_pj, id_hab))
+
+@socketio.on('desbloquear_habilidad')
+def desbloquear_habilidad(data):
+    id_pj = int(data.get('id_personaje'))
+    id_hab = int(data.get('id_habilidad'))
+    emit("desbloquear_habilidad", Habilidades_Requisitos.desbloquearHabilidad(id_pj, id_hab))
+@socketio.on('obtener_requisitos_habilidad')
+def obtener_requisitos_habilidad(data):
+    id_hab = int(data.get('id_habilidad'))
+    id_pj = int(data.get('id_personaje'))
+    emit("obtener_requisitos_habilidad", Habilidades_Requisitos.obtener_requisitos_habilidad(id_pj, id_hab))
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

@@ -11,7 +11,7 @@
             --bg-dark: #121212;
             --card-bg: #1e1e1e;
         }
-
+        * { box-sizing: border-box; }
         body {
             background: var(--bg-dark);
             color: #e0e0e0;
@@ -20,7 +20,6 @@
             display: flex;
             min-height: 100vh;
         }
-
         nav {
             width: var(--sidebar-width);
             background: #000;
@@ -29,242 +28,432 @@
             position: fixed;
             height: 100%;
         }
-
         nav h2 { color: var(--primary-color); font-size: 1.2em; }
-
         .nav-item {
-            padding: 15px;
-            margin: 10px 0;
-            background: #1a1a1a;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: 0.3s;
-            text-align: center;
+            padding: 15px; margin: 10px 0; background: #1a1a1a;
+            cursor: pointer; border-radius: 5px; transition: 0.3s; text-align: center;
         }
-
         .nav-item:hover { background: var(--primary-color); color: white; }
-
         main {
             margin-left: calc(var(--sidebar-width) + 40px);
-            padding: 40px;
-            flex-grow: 1;
+            padding: 40px; flex-grow: 1;
         }
-
         #db_status_container {
-            background: var(--card-bg);
-            padding: 10px 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            display: inline-block;
-            border: 1px solid #333;
-            font-size: 0.9em;
+            background: var(--card-bg); padding: 10px 20px; border-radius: 5px;
+            margin-bottom: 20px; display: inline-block; border: 1px solid #333; font-size: 0.9em;
         }
-
         .view-section { display: none; }
-        .view-active { display: block; }
-
+        .view-active  { display: block; }
         .personaje-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px; margin-top: 20px;
         }
-
         .personaje-card {
-            background: #252525;
-            border: 1px solid #444;
-            padding: 15px;
-            border-radius: 6px;
-            border-left: 4px solid var(--primary-color);
+            background: #252525; border: 1px solid #444; padding: 15px;
+            border-radius: 6px; border-left: 4px solid var(--primary-color);
         }
-
         .personaje-card p { margin: 5px 0; font-size: 0.85em; color: #bbb; }
 
+        /* ── Habilidades ── */
         .habilidad-item {
-            background: #2a2a2a;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid #444;
+            background: #2a2a2a; padding: 15px; margin: 10px 0; border-radius: 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid #444; gap: 10px;
         }
+        .habilidad-item.estado-normal    { border-left: 4px solid #4CAF50; }
+        .habilidad-item.estado-bloqueada { border-left: 4px solid #e67e22; opacity: 0.8; }
+        .habilidad-item.estado-maxima    { border-left: 4px solid #3498db; }
+        .habilidad-info { flex-grow: 1; }
+        .habilidad-info small { color: #999; line-height: 1.7; display: block; margin-top: 4px; }
 
-        button {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            cursor: pointer;
-            border-radius: 3px;
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 0.75em; font-weight: bold; margin-right: 4px;
         }
+        .badge-activa      { background: #1a4a1a; color: #4CAF50; }
+        .badge-pasiva      { background: #1a2a4a; color: #5b9bd5; }
+        .badge-ultimate    { background: #4a1a1a; color: #e74c3c; }
+        .badge-avanzada    { background: #4a3a1a; color: #e67e22; }
+        .badge-desbloqueada{ background: #1a3a2a; color: #2ecc71; }
+        .badge-bloqueada   { background: #3a3a3a; color: #aaa; }
 
-        button:hover { background: #45a049; }
-
-        button:disabled {
-            background: #555 !important;
-            cursor: not-allowed;
-            opacity: 0.7;
+        .nivel-bar-bg {
+            background: #3a3a3a; border-radius: 4px; height: 6px;
+            width: 120px; display: inline-block; vertical-align: middle;
         }
+        .nivel-bar-fill { background: var(--primary-color); height: 6px; border-radius: 4px; }
+
+        .btn { border: none; padding: 8px 14px; cursor: pointer; border-radius: 4px; font-size: 0.85em; white-space: nowrap; transition: 0.2s; }
+        .btn-subir           { background: #4CAF50; color: white; }
+        .btn-subir:hover     { background: #45a049; }
+        .btn-desbloquear     { background: #e67e22; color: white; }
+        .btn-desbloquear:hover { background: #d35400; }
+        .btn-disabled        { background: #444 !important; color: #888 !important; cursor: not-allowed; }
+        .btn-confirmar       { background: #4CAF50; color: white; padding: 10px 24px; font-size: 0.95em; }
+        .btn-confirmar:hover { background: #45a049; }
+        .btn-confirmar:disabled { background: #555 !important; color: #888 !important; cursor: not-allowed; }
+        .btn-cancelar        { background: #555; color: #ddd; padding: 10px 24px; font-size: 0.95em; }
+        .btn-cancelar:hover  { background: #666; }
 
         select {
-            padding: 10px;
-            background: #252525;
-            color: white;
-            border: 1px solid #444;
-            width: 100%;
-            margin: 15px 0;
-            border-radius: 4px;
+            padding: 10px; background: #252525; color: white; border: 1px solid #444;
+            width: 100%; margin: 15px 0; border-radius: 4px;
+        }
+        .leyenda { display: flex; gap: 20px; flex-wrap: wrap; margin: 10px 0 20px; font-size: 0.82em; color: #aaa; }
+        .leyenda-item { display: flex; align-items: center; gap: 6px; }
+        .leyenda-dot  { width: 12px; height: 12px; border-radius: 50%; }
+        #log {
+            margin-top: 30px; color: #888; font-family: monospace; background: #000;
+            padding: 15px; border-radius: 4px; border: 1px solid #333;
         }
 
-        #log {
-            margin-top: 30px;
-            color: #888;
-            font-family: monospace;
-            background: #000;
-            padding: 15px;
-            border-radius: 4px;
-            border: 1px solid #333;
+        /* ══════════════════════════════
+           MODAL DE REQUISITOS
+        ══════════════════════════════ */
+        #modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        #modal-overlay.visible { display: flex; }
+
+        #modal {
+            background: #1c1c1c;
+            border: 1px solid #444;
+            border-radius: 10px;
+            padding: 30px;
+            width: 480px;
+            max-width: 95vw;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            animation: modalIn 0.18s ease;
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.92); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+
+        #modal h2 {
+            margin: 0 0 6px;
+            color: #e67e22;
+            font-size: 1.1em;
+        }
+        #modal .modal-subtitulo {
+            color: #888; font-size: 0.85em; margin-bottom: 20px;
+        }
+
+        /* Árbol de requisitos */
+        .req-lista { list-style: none; padding: 0; margin: 0 0 24px; }
+        .req-item {
+            background: #252525;
+            border: 1px solid #383838;
+            border-radius: 6px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            border-left: 4px solid #555;
+        }
+        .req-item.cumplido   { border-left-color: #4CAF50; }
+        .req-item.pendiente  { border-left-color: #e74c3c; }
+
+        .req-nombre {
+            font-weight: bold; font-size: 0.95em; margin-bottom: 6px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .req-icono { font-size: 1.1em; }
+
+        .req-progreso-label {
+            font-size: 0.8em; color: #aaa; margin-bottom: 4px;
+        }
+        .req-bar-bg {
+            background: #3a3a3a; border-radius: 4px; height: 8px; width: 100%;
+        }
+        .req-bar-fill {
+            height: 8px; border-radius: 4px; transition: width 0.4s ease;
+        }
+        .req-bar-fill.cumplido  { background: #4CAF50; }
+        .req-bar-fill.pendiente { background: #e74c3c; }
+
+        .modal-acciones {
+            display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px;
         }
     </style>
 </head>
 <body>
 
-    <nav>
-        <h2>⚔️ RPG Panel</h2>
-        <div class="nav-item" onclick="showView('inicio')">Menú Principal</div>
-        <div class="nav-item" onclick="showView('mejorar')">Mejorar Habilidad</div>
-    </nav>
+<nav>
+    <h2>⚔️ RPG Panel</h2>
+    <div class="nav-item" onclick="showView('inicio')">Menú Principal</div>
+    <div class="nav-item" onclick="showView('mejorar')">Desbloquear y Mejorar Habilidades</div>
+</nav>
 
-    <main>
-        <div id="db_status_container">
-            <span id="db_status">⚪ Verificando base de datos...</span>
+<main>
+    <div id="db_status_container">
+        <span id="db_status">⚪ Verificando base de datos...</span>
+    </div>
+
+    <section id="view-inicio" class="view-section view-active">
+        <h1>Bienvenido al Panel de Control</h1>
+        <p>Selecciona <strong>Desbloquear y Mejorar Habilidades</strong> para gestionar tus personajes.</p>
+    </section>
+
+    <section id="view-mejorar" class="view-section">
+        <h1>Desbloquear y Mejorar Habilidades</h1>
+
+        <div id="lista_personajes_container">
+            <h3>Lista de Personajes</h3>
+            <div id="personaje_grid" class="personaje-grid"></div>
         </div>
 
-        <section id="view-inicio" class="view-section view-active">
-            <h1>Bienvenido al Panel de Control</h1>
-            <p>Selecciona <strong>Mejorar Habilidad</strong> para gestionar tus personajes.</p>
-        </section>
+        <hr style="border:0.5px solid #333; margin:30px 0;">
 
-        <section id="view-mejorar" class="view-section">
-            <h1>Gestión de Habilidades</h1>
+        <div id="seleccion_personaje">
+            <h3>1. Selecciona un personaje</h3>
+            <select id="select-personaje" onchange="seleccionarPersonaje()">
+                <option value="">-- Carga un personaje --</option>
+            </select>
 
-            <div id="lista_personajes_container">
-                <h3>Lista de Personajes</h3>
-                <div id="personaje_grid" class="personaje-grid"></div>
-            </div>
-
-            <hr style="border: 0.5px solid #333; margin: 30px 0;">
-
-            <div id="seleccion_personaje">
-                <h3>1. Selecciona un personaje para ver sus habilidades</h3>
-                <select id="select-personaje" onchange="seleccionarPersonaje()">
-                    <option value="">-- Carga un personaje --</option>
-                </select>
-
-                <div id="habilidades_container" style="display:none; margin-top: 20px;">
-                    <h3>2. Habilidades Disponibles</h3>
-                    <div id="lista_habilidades"></div>
+            <div id="habilidades_container" style="display:none; margin-top:20px;">
+                <h3>2. Habilidades</h3>
+                <div class="leyenda">
+                    <div class="leyenda-item"><div class="leyenda-dot" style="background:#4CAF50"></div>Normal / desbloqueada</div>
+                    <div class="leyenda-item"><div class="leyenda-dot" style="background:#e67e22"></div>Avanzada bloqueada</div>
+                    <div class="leyenda-item"><div class="leyenda-dot" style="background:#3498db"></div>Nivel máximo</div>
                 </div>
+                <div id="lista_habilidades"></div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <div id="log">> Esperando acciones...</div>
-    </main>
+    <div id="log">> Esperando acciones...</div>
+</main>
 
-    <script>
-        const socket = io();
-        let personajeSeleccionadoId = null;
+<!-- ══ MODAL DE REQUISITOS ══ -->
+<div id="modal-overlay">
+    <div id="modal">
+        <h2 id="modal-titulo">Desbloquear habilidad</h2>
+        <p class="modal-subtitulo" id="modal-subtitulo">Cumple los requisitos para desbloquear esta habilidad.</p>
+        <ul class="req-lista" id="modal-requisitos"></ul>
+        <div class="modal-acciones">
+            <button class="btn btn-cancelar" onclick="cerrarModal()">✖ Cancelar</button>
+            <button class="btn btn-confirmar" id="btn-confirmar-desbloqueo" onclick="confirmarDesbloqueo()">
+                🔓 Confirmar desbloqueo
+            </button>
+        </div>
+    </div>
+</div>
 
-        function showView(viewName) {
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active'));
-            document.getElementById('view-' + viewName).classList.add('view-active');
-            if(viewName === 'mejorar') socket.emit('personajes');
-        }
+<script>
+    const socket = io();
+    let personajeSeleccionadoId = null;
+    let habilidadPendienteId    = null;   // id de la habilidad que se quiere desbloquear
 
-        socket.on('personajes', (personajes) => {
-            const grid = document.getElementById('personaje_grid');
-            const select = document.getElementById('select-personaje');
-            grid.innerHTML = '';
-            select.innerHTML = '<option value="">-- Elige un personaje --</option>';
-            personajes.forEach(p => {
-                grid.innerHTML += `
-                    <div class="personaje-card">
-                        <strong>ID: ${p.id} - ${p.nombre}</strong>
-                        <p>Nivel: ${p.nivel} | Oro: ${p.oro}g</p>
-                        <p>Vida: ${p.vida_actual} | Exp: ${p.exp}</p>
-                        <p><small>Raza ID: ${p.id_raza} | Clase ID: ${p.id_clase}</small></p>
-                    </div>
-                `;
-                select.innerHTML += `<option value="${p.id}">${p.nombre} (ID: ${p.id})</option>`;
-            });
+    /* ── Vistas ── */
+    function showView(viewName) {
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active'));
+        document.getElementById('view-' + viewName).classList.add('view-active');
+        if (viewName === 'mejorar') socket.emit('personajes');
+    }
+
+    /* ── Personajes ── */
+    socket.on('personajes', (personajes) => {
+        const grid   = document.getElementById('personaje_grid');
+        const select = document.getElementById('select-personaje');
+        grid.innerHTML   = '';
+        select.innerHTML = '<option value="">-- Elige un personaje --</option>';
+        personajes.forEach(p => {
+            grid.innerHTML += `
+                <div class="personaje-card">
+                    <strong>ID: ${p.id} - ${p.nombre}</strong>
+                    <p>Nivel: ${p.nivel} | Oro: ${p.oro}g</p>
+                    <p>Vida: ${p.vida_actual} | Exp: ${p.exp}</p>
+                    <p><small>Raza ID: ${p.id_raza} | Clase ID: ${p.id_clase}</small></p>
+                </div>`;
+            select.innerHTML += `<option value="${p.id}">${p.nombre} (ID: ${p.id})</option>`;
         });
+    });
 
-        function seleccionarPersonaje() {
-            personajeSeleccionadoId = document.getElementById('select-personaje').value;
-            const container = document.getElementById('habilidades_container');
-            if(personajeSeleccionadoId){
-                container.style.display = 'block';
-                document.getElementById('lista_habilidades').innerHTML = "<p>Cargando habilidades...</p>";
-                socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
+    function seleccionarPersonaje() {
+        personajeSeleccionadoId = document.getElementById('select-personaje').value;
+        const container = document.getElementById('habilidades_container');
+        if (personajeSeleccionadoId) {
+            container.style.display = 'block';
+            document.getElementById('lista_habilidades').innerHTML = '<p>Cargando habilidades...</p>';
+            socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    /* ── Renderizar habilidades ── */
+    socket.on('mostrar_habilidades', (habilidades) => {
+        const container = document.getElementById('lista_habilidades');
+        container.innerHTML = '';
+        if (!habilidades || habilidades.length === 0) {
+            container.innerHTML = '<p style="color:#888;">Este personaje no tiene habilidades disponibles.</p>';
+            return;
+        }
+        habilidades.forEach(h => {
+            const esAvanzada   = h.habilidad_avanzada === true;
+            const desbloqueada = h.habilidad_desbloqueada === true;
+            const enNivelMax   = h.nivel_actual >= h.nivel_maximo;
+
+            let estadoClase, botonHTML;
+
+            if (esAvanzada && !desbloqueada) {
+                estadoClase = 'estado-bloqueada';
+                botonHTML = `<button class="btn btn-desbloquear"
+                                onclick="abrirModalRequisitos(${h.id}, '${h.nombre}')">
+                                🔒 Desbloquear
+                             </button>`;
+            } else if (enNivelMax) {
+                estadoClase = 'estado-maxima';
+                botonHTML = `<button class="btn btn-disabled" disabled>⭐ Nivel Máximo</button>`;
             } else {
-                container.style.display = 'none';
+                estadoClase = 'estado-normal';
+                botonHTML = `<button class="btn btn-subir" onclick="mejorarHabilidad(${h.id})">
+                                ⬆️ Subir Nivel
+                             </button>`;
             }
-        }
 
-        socket.on('mostrar_habilidades', (habilidades) => {
-            const container = document.getElementById('lista_habilidades');
-            container.innerHTML = '';
-            if(!habilidades || habilidades.length === 0){
-                container.innerHTML = '<p style="color: #888;">Este personaje no tiene habilidades disponibles.</p>';
-                return;
-            }
-            habilidades.forEach(h => {
-                const bloqueado = h.habilidad_avanzada === true; // true si es avanzada
-                container.innerHTML += `
-                    <div class="habilidad-item">
-                        <div>
-                            <strong>${h.nombre}</strong><br>
-                            <small>
-                                Nivel: ${h.nivel_actual} / ${h.nivel_maximo} | ID: ${h.id}<br>
-                                Tipo: ${h.tipo || "Desconocido"}<br>
-                                Descripción: ${h.descripcion || "Sin descripción"}
-                            </small>
-                        </div>
-                        <button ${bloqueado ? 'disabled' : ''} onclick="mejorarHabilidad(${h.id})">
-                            ${bloqueado ? 'Bloqueado' : 'Subir Nivel'}
-                        </button>
+            const badgeTipo     = `<span class="badge badge-${h.tipo}">${h.tipo}</span>`;
+            const badgeAvanzada = esAvanzada ? `<span class="badge badge-avanzada">⚔️ Avanzada</span>` : '';
+            const badgeEstado   = esAvanzada
+                ? (desbloqueada
+                    ? `<span class="badge badge-desbloqueada">✅ Desbloqueada</span>`
+                    : `<span class="badge badge-bloqueada">🔒 Bloqueada</span>`)
+                : '';
+
+            const pct   = h.nivel_maximo > 0 ? (h.nivel_actual / h.nivel_maximo) * 100 : 0;
+            const barra = `<div class="nivel-bar-bg">
+                               <div class="nivel-bar-fill" style="width:${pct}%"></div>
+                           </div>`;
+
+            container.innerHTML += `
+                <div class="habilidad-item ${estadoClase}">
+                    <div class="habilidad-info">
+                        <strong>${h.nombre}</strong>
+                        ${badgeTipo} ${badgeAvanzada} ${badgeEstado}<br>
+                        <small>
+                            <strong style="color:#666; font-size:0.8em;">ID: ${h.id}</strong><br>
+                            Nivel: ${h.nivel_actual} / ${h.nivel_maximo} ${barra}<br>
+                            Daño base: ${h.dano_base} | Coste maná: ${h.costo_mana}<br>
+                            ${h.descripcion || ''}
+                        </small>
                     </div>
-                `;
-            });
+                    ${botonHTML}
+                </div>`;
         });
+    });
 
-        function mejorarHabilidad(idHabilidad){
-            socket.emit('mejorar_habilidades', {
-                id_personaje: personajeSeleccionadoId,
-                id_habilidad: idHabilidad
-            });
+    /* ════════════════════════════════
+       MODAL DE REQUISITOS
+    ════════════════════════════════ */
+    function abrirModalRequisitos(idHabilidad, nombreHabilidad) {
+        habilidadPendienteId = idHabilidad;
+
+        // Título y subtítulo
+        document.getElementById('modal-titulo').textContent    = `🔓 Desbloquear: ${nombreHabilidad}`;
+        document.getElementById('modal-subtitulo').textContent = 'Revisa los requisitos necesarios para desbloquear esta habilidad.';
+        document.getElementById('modal-requisitos').innerHTML  = '<li style="color:#888; font-size:0.85em;">Cargando requisitos...</li>';
+        document.getElementById('btn-confirmar-desbloqueo').disabled = true;
+
+        // Mostrar modal
+        document.getElementById('modal-overlay').classList.add('visible');
+
+        // Pedir requisitos al servidor
+        socket.emit('obtener_requisitos_habilidad', {
+            id_habilidad: idHabilidad,
+            id_personaje: personajeSeleccionadoId
+        });
+    }
+
+    socket.on('obtener_requisitos_habilidad', (requisitos) => {
+        const lista = document.getElementById('modal-requisitos');
+        lista.innerHTML = '';
+
+        if (!requisitos || requisitos.length === 0) {
+            lista.innerHTML = '<li style="color:#888;">Esta habilidad no tiene requisitos registrados.</li>';
+            document.getElementById('btn-confirmar-desbloqueo').disabled = false;
+            return;
         }
 
-        socket.on('mejorar_habilidades', (res) => {
-            if(res){
-                alert("¡Habilidad mejorada con éxito!");
-                socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
-            } else {
-                alert("No se pudo mejorar: La habilidad ya está al nivel máximo.");
-            }
+        // ¿Cumple TODOS los requisitos?
+        const todosCumplidos = requisitos.every(r => r.cumplido);
+
+        requisitos.forEach(r => {
+            const claseItem  = r.cumplido ? 'cumplido'  : 'pendiente';
+            const icono      = r.cumplido ? '✅' : '❌';
+            const pct        = Math.min((r.nivel_actual_pj / r.nivel_necesario) * 100, 100);
+            const claseBar   = r.cumplido ? 'cumplido' : 'pendiente';
+
+            lista.innerHTML += `
+                <li class="req-item ${claseItem}">
+                    <div class="req-nombre">
+                        <span class="req-icono">${icono}</span>
+                        ${r.nombre}
+                    </div>
+                    <div class="req-progreso-label">
+                        Nivel requerido: ${r.nivel_actual_pj} / ${r.nivel_necesario}
+                    </div>
+                    <div class="req-bar-bg">
+                        <div class="req-bar-fill ${claseBar}" style="width:${pct}%"></div>
+                    </div>
+                </li>`;
         });
 
-        socket.on('connect', () => { socket.emit('comprobar_conexion'); });
+        // Activar confirmación solo si cumple todo
+        document.getElementById('btn-confirmar-desbloqueo').disabled = !todosCumplidos;
+    });
 
-        socket.on('db_status', (data) => {
-            const statusElement = document.getElementById('db_status');
-            statusElement.innerText = data.connected ? "🟢 Base de Datos: Conectada" : "🔴 Base de Datos: Error";
-            statusElement.style.color = data.connected ? "#2ecc71" : "#e74c3c";
+    function cerrarModal() {
+        document.getElementById('modal-overlay').classList.remove('visible');
+        habilidadPendienteId = null;
+    }
+
+    function confirmarDesbloqueo() {
+        if (!habilidadPendienteId) return;
+        socket.emit('desbloquear_habilidad', {
+            id_personaje: personajeSeleccionadoId,
+            id_habilidad: habilidadPendienteId
         });
+        cerrarModal();
+    }
 
-        socket.on('status', (data) => { document.getElementById('log').innerText = "> " + data.msg; });
-    </script>
+    socket.on('desbloquear_habilidad', (res) => {
+        log(res ? '🔓 ¡Habilidad desbloqueada con éxito!' : '❌ No se pudo desbloquear: requisitos no cumplidos.');
+        if (res) socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
+    });
+
+    /* ── Mejorar ── */
+    function mejorarHabilidad(idHabilidad) {
+        socket.emit('mejorar_habilidades', {
+            id_personaje: personajeSeleccionadoId,
+            id_habilidad: idHabilidad
+        });
+    }
+
+    socket.on('mejorar_habilidades', (res) => {
+        log(res ? '⬆️ ¡Habilidad mejorada con éxito!' : '❌ No se pudo mejorar: nivel máximo alcanzado.');
+        if (res) socket.emit('mostrar_habilidades', { id_personaje: personajeSeleccionadoId });
+    });
+
+    /* ── Utilidades ── */
+    function log(msg) { document.getElementById('log').innerText = '> ' + msg; }
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) cerrarModal();
+    });
+
+    socket.on('connect',   () => socket.emit('comprobar_conexion'));
+    socket.on('db_status', (data) => {
+        const el = document.getElementById('db_status');
+        el.innerText   = data.connected ? '🟢 Base de Datos: Conectada' : '🔴 Base de Datos: Error';
+        el.style.color = data.connected ? '#2ecc71' : '#e74c3c';
+    });
+    socket.on('status', (data) => log(data.msg));
+</script>
 </body>
 </html>

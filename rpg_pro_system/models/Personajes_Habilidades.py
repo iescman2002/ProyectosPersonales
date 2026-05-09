@@ -1,6 +1,5 @@
 from database.ConexionDB import conectar_bd
 from models.Habilidades import Habilidades
-from models.Habilidades_Requisitos import Habilidades_Requisitos
 
 
 class Personajes_Habilidades:
@@ -32,6 +31,7 @@ class Personajes_Habilidades:
                         nivel_actual = fila[2]
                         exp_habilidad = fila[3]
                         habilidad_avanzada = fila[4] is not None # Pone true si existe y false si no
+                        desbloqueada = nivel_actual > 0 # Si el nivel de la habilidad no es 0 entonces la habilidad estará desbloqueada, sino false
                         # 2. Creamos el objeto Clase_RPG con esos datos
                         nuevo_ph = Personajes_Habilidades(id_personaje, id_habilidad, nivel_actual, exp_habilidad)
                         # 3. Lo convertimos a un "diccionario" (formato clave: valor)
@@ -42,7 +42,8 @@ class Personajes_Habilidades:
                             "nivel_actual": nuevo_ph.nivel_actual,
                             "exp_habilidad": nuevo_ph.exp_habilidad,
                             # Comprobar si la habilidad del personaje es avanzada o no (True o false)
-                            "habilidad_avanzada": habilidad_avanzada
+                            "habilidad_avanzada": habilidad_avanzada,
+                            "habilidad_desbloqueada": desbloqueada,
                         }
                         # 4. Lo añadimos a nuestra lista final
                         personajes_habilidades_data.append(diccionario_ph)
@@ -60,9 +61,14 @@ class Personajes_Habilidades:
                 # 2. Usar un segundo 'with' para el cursor (se cierra solo)
                 with conexion.cursor() as cursor:
                     cursor.execute("""
-                        SELECT ph.id_habilidad, ph.nivel_actual, hr.id_habilidad
-                        FROM PERSONAJES_HABILIDADES ph
-                        LEFT JOIN HABILIDADES_REQUISITOS hr ON ph.id_habilidad = hr.id_habilidad
+                       SELECT DISTINCT
+                       ON (ph.id_habilidad)
+                           ph.id_habilidad,
+                           ph.nivel_actual,
+                           hr.id_habilidad AS es_avanzada
+                       FROM PERSONAJES_HABILIDADES ph
+                           LEFT JOIN HABILIDADES_REQUISITOS hr
+                       ON ph.id_habilidad = hr.id_habilidad
                        WHERE ph.id_personaje = %s
                        """, (id_personaje,))
                     filas = cursor.fetchall()
@@ -70,10 +76,12 @@ class Personajes_Habilidades:
                         id_habilidad= fila[0]
                         nivel_actual = fila[1]
                         habilidad_avanzada = fila[2] is not None
+                        desbloqueada = nivel_actual > 0 # Si el nivel de la habilidad no es 0 entonces la habilidad estará desbloqueada, sino false
                         habilidad = Habilidades.mostrar_habilidad(id_habilidad)
                         if habilidad: # Si la habilidad existe
                             habilidad["nivel_actual"] = nivel_actual # Añado en el diccionario como nivel actual el nivel actual
                             habilidad["habilidad_avanzada"] = habilidad_avanzada
+                            habilidad["habilidad_desbloqueada"] = desbloqueada
                             diccionario_habilidades_pj.append(habilidad)
                 return diccionario_habilidades_pj
             except:
@@ -90,7 +98,12 @@ class Personajes_Habilidades:
             if cls.verificarNivelMaximoHabilidad(nivel_habilidad_actual, id_habilidad):
         # Verificar si la habilidad es avanzada o no
                 if Habilidades.es_habilidad_avanzada(id_habilidad):
-                    print("en construcción")
+        # Verificar que la habilidad esté ya desbloqueada (que el nivel no sea 0)
+                    if Personajes_Habilidades.obtenerNivelHabilidadActual(id_personaje,id_habilidad)>0:
+                        cls.subirNivelHabilidad(id_personaje,id_habilidad)
+                        return True
+                    else:
+                        return False
         # Si la Habilidad no es avanzada, basta solo con comprobar que la habilidad no supere al nivel máximo.
                 else:
                     cls.subirNivelHabilidad(id_personaje, id_habilidad)
