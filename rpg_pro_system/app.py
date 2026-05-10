@@ -100,11 +100,17 @@ def desbloquear_habilidad(data):
     id_pj = int(data.get('id_personaje'))
     id_hab = int(data.get('id_habilidad'))
     emit("desbloquear_habilidad", Habilidades_Requisitos.desbloquearHabilidad(id_pj, id_hab))
+
 @socketio.on('obtener_requisitos_habilidad')
 def obtener_requisitos_habilidad(data):
     id_hab = int(data.get('id_habilidad'))
     id_pj = int(data.get('id_personaje'))
     emit("obtener_requisitos_habilidad", Habilidades_Requisitos.obtener_requisitos_habilidad(id_pj, id_hab))
+
+@socketio.on('ver_inventario')
+def ver_inventario(data):
+    id_pj = int(data.get('id_personaje'))
+    emit("ver_inventario", Inventario.obtener_inventario_pj(id_pj))
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

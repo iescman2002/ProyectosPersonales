@@ -44,3 +44,57 @@ class Inventario:
             except Exception as e:
                 print(f"❌ Error al consultar los enemigos: {e}")
         return inventarios_data
+    @classmethod
+    def obtener_inventario_pj(cls, id_personaje):
+        inventarios_data = []  # Lista vacía para guardar los diccionarios
+        with conectar_bd() as conexion:
+            try:
+                # 2. Usar un segundo 'with' para el cursor (se cierra solo)
+                with conexion.cursor() as cursor:
+                    cursor.execute("""
+                       SELECT inv.id,
+                          inv.id_personaje,
+                          inv.id_item,
+                          inv.cantidad,
+                          inv.equipado,
+                          it.nombre,
+                          it.descripcion,
+                          it.precio,
+                          it.rareza,
+                          it.mod_vida,
+                          it.mod_mana,
+                          it.mod_fuerza,
+                          it.mod_agilidad,
+                          it.mod_inteligencia,
+                          it.dano_bonus,
+                          ti.nombre AS tipo_nombre
+                       FROM INVENTARIOS inv
+                            JOIN ITEMS it ON it.id = inv.id_item
+                            JOIN TIPOS_ITEM ti ON ti.id = it.tipo
+                       WHERE inv.id_personaje = %s
+                       """, (id_personaje,))
+                    filas = cursor.fetchall()
+                    for fila in filas:
+                        diccionario_i = {
+                            "id": fila[0],
+                            "id_personaje": fila[1],
+                            "id_item": fila[2],
+                            "cantidad": fila[3],
+                            "equipado": fila[4],
+                            "nombre": fila[5],
+                            "descripcion": fila[6],
+                            "precio": fila[7],
+                            "rareza": fila[8],
+                            "mod_vida": fila[9],
+                            "mod_mana": fila[10],
+                            "mod_fuerza": fila[11],
+                            "mod_agilidad": fila[12],
+                            "mod_inteligencia": fila[13],
+                            "dano_bonus": fila[14],
+                            "tipo": fila[15]
+                        }
+                        inventarios_data.append(diccionario_i)
+                    print(f"✅ Se han recuperado {len(inventarios_data)} items del inventario.")
+            except Exception as e:
+                print(f"❌ Error al consultar el inventario: {e}")
+            return inventarios_data
