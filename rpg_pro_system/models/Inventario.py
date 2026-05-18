@@ -147,3 +147,31 @@ class Inventario:
                     conexion.commit()
             except Exception as e:
                 print(f"Error al insertar el item en el inventario: {e}")
+    @classmethod
+    def equipar_desequipar_item(cls, id_item, id_personaje, equipado):
+        # Si esta equipada y llamo al metodo lo desequipo (Activado True -> False)
+        if equipado is True:
+            with conectar_bd() as conexion:
+                try:
+                    with conexion.cursor() as cursor:
+                        cursor.execute(
+                            "UPDATE INVENTARIOS SET equipado = FALSE WHERE id_item = %s AND id_personaje = %s", (id_item, id_personaje)
+                        )
+                        conexion.commit()
+                        return True
+                except Exception as e:
+                    print(f"Error al desequipar el item: {e}")
+                    return False
+        # Y si no esta equipada lo equipo (Activado False -> True)
+        else:
+            with conectar_bd() as conexion:
+                try:
+                    with conexion.cursor() as cursor:
+                        cursor.execute(
+                            "UPDATE INVENTARIOS SET equipado = TRUE WHERE id_item = %s AND id_personaje = %s",(id_item, id_personaje)
+                        )
+                        conexion.commit()
+                        return True
+                except Exception as e:
+                    print(f"Error al equipar el item: {e}")
+                    return False

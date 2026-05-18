@@ -529,9 +529,12 @@
                     ${statsHTML}
                     <div class="item-footer">
                         <span>💰 ${it.precio}g &nbsp;|&nbsp; ×${it.cantidad}</span>
-                        ${it.equipado
-                            ? `<span class="equipado-badge">✅ Equipado</span>`
-                            : `<span class="no-equipado-badge">No equipado</span>`}
+                        <button
+                            class="btn ${it.equipado ? 'btn-desbloquear' : 'btn-subir'}"
+                            style="padding: 4px 10px; font-size: 0.8em;"
+                            onclick="equiparDesequiparItem(${it.id_item}, ${it.equipado})">
+                            ${it.equipado ? '🔴 Desequipar' : '🟢 Equipar'}
+                        </button>
                     </div>
                 </div>`;
         });
@@ -740,6 +743,22 @@
     socket.on('status', (data) => {
         log(data.msg);
         socket.emit('personajes');
+    });
+        function equiparDesequiparItem(idItem, equipado) {
+        socket.emit('equipar_desequipar_item', {
+            id_personaje: personajeInvId,
+            id_item: idItem,
+            equipado: equipado
+        });
+    }
+
+    socket.on('equipar_desequipar_item', (exito) => {
+        if (exito) {
+            log('✅ Item actualizado correctamente.');
+            socket.emit('ver_inventario', { id_personaje: personajeInvId });
+        } else {
+            log('❌ No se pudo actualizar el item.');
+        }
     });
 </script>
 </body>

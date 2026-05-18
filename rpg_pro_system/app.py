@@ -120,6 +120,11 @@ def comprar_item(data):
     id_item = int(data.get('id_item'))
     precio_item = int(data.get('precio_item'))
     emit("comprar_item", Inventario.comprar_item(id_item, id_pj, precio_item))
-
+@socketio.on('equipar_desequipar_item')
+def equipar_desequipar_item(data):
+    id_pj = int(data.get('id_personaje'))
+    id_item = int(data.get('id_item'))
+    equipado = data.get('equipado')
+    emit("equipar_desequipar_item", Inventario.equipar_desequipar_item(id_item, id_pj, equipado))
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
