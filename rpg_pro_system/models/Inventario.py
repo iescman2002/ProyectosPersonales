@@ -1,4 +1,5 @@
 from database.ConexionDB import conectar_bd
+from models.Personaje import Personaje
 
 
 class Inventario:
@@ -98,3 +99,51 @@ class Inventario:
             except Exception as e:
                 print(f"❌ Error al consultar el inventario: {e}")
             return inventarios_data
+    @classmethod
+    def comprar_item(cls, id_item, id_personaje, precio_item):
+        # Primero actualizo el oro del personaje tras comprar el item
+        Personaje.actualizar_oro_pj(id_personaje, -precio_item) # Pasamos el precio del item como negativo porque resta
+        # Después, verifico si el item que quiero comprar lo tengo ya guardado en el inventario
+        if cls.verificar_item_en_inventario(id_item,id_personaje):
+        # Si ya existe en el inventario, actualizamos solo su cantidad a +1
+            cls.insertar_item_existente(id_item,id_personaje)
+            # Sino, insertamos como cantidad 1 el nuevo item
+        else:
+            cls.insertar_nuevo_item(id_item,id_personaje)
+        return True
+    @classmethod
+    def verificar_item_en_inventario(cls, id_item, id_personaje):
+        with conectar_bd() as conexion:
+            try:
+                with conexion.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT 1 FROM INVENTARIOS WHERE id_item = %s AND id_personaje = %s", (id_item, id_personaje)
+                    )
+                    resultado = cursor.fetchone()
+                    # Ternaria donde devuelvo true si se encuentra en la bd y false si no
+                    return resultado is not None
+            except Exception as e:
+                print(f"Error al verificar el item en el inventario: {e}")
+                return False
+    @classmethod
+    def insertar_item_existente(cls,id_item,id_personaje):
+        with conectar_bd() as conexion:
+            try:
+                with conexion.cursor() as cursor:
+                    cursor.execute(
+                        "UPDATE INVENTARIOS SET cantidad = cantidad + 1 WHERE id_item = %s AND id_personaje = %s", (id_item, id_personaje)
+                    )
+                    conexion.commit()
+            except Exception as e:
+                print(f"Error al insertar el item en el inventario: {e}")
+    @classmethod
+    def insertar_nuevo_item(cls,id_item,id_personaje):
+        with conectar_bd() as conexion:
+            try:
+                with conexion.cursor() as cursor:
+                    cursor.execute(
+                        "INSERT INTO INVENTARIOS (id_item, id_personaje, cantidad) VALUES (%s, %s, 1)", (id_item, id_personaje)
+                    )
+                    conexion.commit()
+            except Exception as e:
+                print(f"Error al insertar el item en el inventario: {e}")

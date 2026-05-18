@@ -120,7 +120,6 @@
         .inv-stat-card .num { font-size: 1.6em; font-weight: bold; color: var(--primary-color); }
         .inv-stat-card .lbl { font-size: 0.75em; color: #666; margin-top: 2px; }
 
-        /* Contenedor inline para controles de filtrado */
         .tienda-controles {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -291,7 +290,6 @@
                     <option value="">-- Elige un personaje --</option>
                 </select>
             </div>
-            <!-- MEJORA: Resumen visual para destacar el oro de forma clara -->
             <div id="tienda-oro-resumen" style="display: none;">
                 <div class="inv-stat-card" style="border-color: #f1c40f;">
                     <div class="num" id="tienda-oro-pj" style="color: #f1c40f;">0g</div>
@@ -303,7 +301,6 @@
         <div id="tienda_container" style="display:none; margin-top:20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h3>2. Artículos Disponibles (Ordenados por Rareza 📈)</h3>
-                <!-- MEJORA: Filtro por categoría/tipo de ítem -->
                 <div style="width: 250px;">
                     <select id="filtro-tipo-tienda" onchange="filtrarYRenderizarTienda()" style="margin: 0;">
                         <option value="TODOS">🏪 Ver Todo (Tienda Principal)</option>
@@ -329,7 +326,7 @@
     <div id="log">> Esperando acciones...</div>
 </main>
 
-<!-- MODAL REQUISITOS -->
+<!-- MODAL DINÁMICO -->
 <div id="modal-overlay">
     <div id="modal">
         <h2 id="modal-titulo">Desbloquear habilidad</h2>
@@ -337,7 +334,7 @@
         <ul class="req-lista" id="modal-requisitos"></ul>
         <div class="modal-acciones">
             <button class="btn btn-cancelar" onclick="cerrarModal()">✖ Cancelar</button>
-            <button class="btn btn-confirmar" id="btn-confirmar-desbloqueo" onclick="confirmarDesbloqueo()">
+            <button class="btn btn-confirmar" id="btn-confirmar-modal" onclick="confirmarDesbloqueo()">
                 🔓 Confirmar desbloqueo
             </button>
         </div>
@@ -346,15 +343,14 @@
 
 <script>
     const socket = io();
-    let personajeHabId       = null;
-    let personajeInvId       = null;
-    let personajeTiendaId    = null;
+    let personajeHabId        = null;
+    let personajeInvId        = null;
+    let personajeTiendaId     = null;
     let habilidadPendienteId = null;
-
-    // Cache local de ítems de la tienda para poder aplicar filtros instantáneos
+    let itemTiendaPendiente  = null;
+    let listaPersonajesCache = [];
     let cacheItemsTienda     = [];
 
-    // Mapa de pesos para ordenar por rareza de menor a mayor
     const rarezaPesos = { 'Común': 1, 'Raro': 2, 'Épico': 3, 'Legendario': 4 };
 
     /* ── Vistas ── */
@@ -368,11 +364,11 @@
 
     /* ── Personajes ── */
     socket.on('personajes', (personajes) => {
+        listaPersonajesCache = personajes;
         poblarPersonajes(personajes, 'hab_personaje_grid', 'select-personaje-hab');
         poblarPersonajes(personajes, 'inv_personaje_grid', 'select-personaje-inv');
         poblarPersonajes(personajes, 'tienda_personaje_grid', 'select-personaje-tienda');
 
-        // Actualizar el oro destacado si ya hay un personaje comprador seleccionado
         if (personajeTiendaId) {
             const pjSeleccionado = personajes.find(p => p.id == personajeTiendaId);
             if (pjSeleccionado) {
@@ -386,6 +382,7 @@
         const grid   = document.getElementById(gridId);
         const select = document.getElementById(selectId);
         if(!grid || !select) return;
+        const currentVal = select.value;
         grid.innerHTML   = '';
         select.innerHTML = '<option value="">-- Elige un personaje --</option>';
         personajes.forEach(p => {
@@ -399,7 +396,9 @@
             select.innerHTML += `<option value="${p.id}">${p.nombre} (ID: ${p.id})</option>`;
         });
 
-        if (selectId === 'select-personaje-tienda' && personajeTiendaId) {
+        if (currentVal) {
+            select.value = currentVal;
+        } else if (selectId === 'select-personaje-tienda' && personajeTiendaId) {
             select.value = personajeTiendaId;
         }
     }
@@ -426,10 +425,10 @@
         }
         habilidades.forEach(h => {
             const esAvanzada   = h.habilidad_avanzada === true;
-            const自由 = h.habilidad_desbloqueada === true;
+            const tieneDesbloqueada = h.habilidad_desbloqueada === true;
             const enNivelMax   = h.nivel_actual >= h.nivel_maximo;
             let estadoClase, botonHTML;
-            if (esAvanzada && !自由) {
+            if (esAvanzada && !tieneDesbloqueada) {
                 estadoClase = 'estado-bloqueada';
                 botonHTML = `<button class="btn btn-desbloquear" onclick="abrirModalRequisitos(${h.id}, '${h.nombre}')">🔒 Desbloquear</button>`;
             } else if (enNivelMax) {
@@ -442,7 +441,7 @@
             const badgeTipo     = `<span class="badge badge-${h.tipo}">${h.tipo}</span>`;
             const badgeAvanzada = esAvanzada ? `<span class="badge badge-avanzada">⚔️ Avanzada</span>` : '';
             const badgeEstado   = esAvanzada
-                ? (自由 ? `<span class="badge badge-desbloqueada">✅ Desbloqueada</span>`
+                ? (tieneDesbloqueada ? `<span class="badge badge-desbloqueada">✅ Desbloqueada</span>`
                         : `<span class="badge badge-bloqueada">🔒 Bloqueada</span>`) : '';
             const pct   = h.nivel_maximo > 0 ? (h.nivel_actual / h.nivel_maximo) * 100 : 0;
             const barra = `<div class="nivel-bar-bg"><div class="nivel-bar-fill" style="width:${pct}%"></div></div>`;
@@ -547,9 +546,7 @@
         if (personajeTiendaId) {
             container.style.display = 'block';
             document.getElementById('lista_tienda').innerHTML = '<p>Abriendo catálogo de la tienda...</p>';
-            // Resetear filtro al cambiar de personaje
             document.getElementById('filtro-tipo-tienda').value = 'TODOS';
-            // Volver a pedir datos generales de personajes para refrescar el marcador de oro preciso
             socket.emit('personajes');
             socket.emit('ver_tienda');
         } else {
@@ -559,25 +556,20 @@
     }
 
     socket.on('ver_tienda', (items) => {
-        // Almacenamos la lista completa original en la caché
         cacheItemsTienda = items || [];
-        // Ordenamos la caché por rareza de menor a mayor
         cacheItemsTienda.sort((a, b) => {
             const pesoA = rarezaPesos[a.rareza] || 0;
             const pesoB = rarezaPesos[b.rareza] || 0;
             return pesoA - pesoB;
         });
-        // Renderizamos
         filtrarYRenderizarTienda();
     });
 
-    // Función encargada de filtrar y pintar las tarjetas ordenadas
     function filtrarYRenderizarTienda() {
         const grid = document.getElementById('lista_tienda');
         const filtro = document.getElementById('filtro-tipo-tienda').value;
         grid.innerHTML = '';
 
-        // Filtrado por tipo de item
         const itemsFiltrados = cacheItemsTienda.filter(it => {
             if (filtro === 'TODOS') return true;
             return it.tipo === filtro;
@@ -617,19 +609,79 @@
                     ${statsHTML}
                     <div class="item-footer">
                         <span>Precio: <strong style="color:#f1c40f;">💰 ${it.precio}g</strong></span>
-                        <button class="btn btn-subir" style="padding: 4px 10px; font-size: 0.8em;">🛒 Comprar</button>
+                        <button class="btn btn-subir" style="padding: 4px 10px; font-size: 0.8em;" onclick="abrirModalCompra(${it.id}, '${it.nombre}', ${it.precio})">🛒 Comprar</button>
                     </div>
                 </div>`;
         });
     }
 
-    /* ── Modal requisitos ── */
+    /* ── Submenú / Modal para Compra de Objetos ── */
+    function abrirModalCompra(idItem, nombreItem, precioItem) {
+        itemTiendaPendiente = { id: idItem, nombre: nombreItem, precio: precioItem };
+
+        const pj = listaPersonajesCache.find(p => p.id == personajeTiendaId);
+        const oroActual = pj ? pj.oro : 0;
+        const puedeComprar = oroActual >= precioItem;
+
+        let balanceHTML = '';
+        if (puedeComprar) {
+            const oroRestante = oroActual - precioItem;
+            balanceHTML = `Oro restante tras compra: ${oroRestante}g`;
+        } else {
+            const oroFaltante = precioItem - oroActual;
+            balanceHTML = `Falta: ${oroFaltante} Oro`;
+        }
+
+        document.getElementById('modal-titulo').textContent = `🛒 Confirmar Compra: ${nombreItem}`;
+        document.getElementById('modal-subtitulo').textContent = 'Comprueba los fondos de tu personaje antes de adquirir el artículo.';
+
+        const btnConfirmar = document.getElementById('btn-confirmar-modal');
+        btnConfirmar.textContent = '🛒 Confirmar Compra';
+        btnConfirmar.setAttribute('onclick', 'confirmarCompra()');
+        btnConfirmar.disabled = !puedeComprar;
+
+        const lista = document.getElementById('modal-requisitos');
+        lista.innerHTML = `
+            <li class="req-item ${puedeComprar ? 'cumplido' : 'pendiente'}">
+                <div class="req-nombre"><span>${puedeComprar ? '✅' : '❌'}</span>${puedeComprar ? 'Balance Suficiente' : 'Oro Insuficiente'}</div>
+                <div class="req-progreso-label">Oro actual: ${oroActual}g | Coste del ítem: ${precioItem}g</div>
+                <div class="req-progreso-label" style="margin-top: 4px; font-weight: bold; color: ${puedeComprar ? '#2ecc71' : '#e74c3c'}">
+                    ${balanceHTML}
+                </div>
+            </li>`;
+
+        document.getElementById('modal-overlay').classList.add('visible');
+    }
+
+    function confirmarCompra() {
+        if (!itemTiendaPendiente || !personajeTiendaId) return;
+        socket.emit('comprar_item', { id_personaje: personajeTiendaId, id_item: itemTiendaPendiente.id, precio_item: itemTiendaPendiente.precio });
+        cerrarModal();
+    }
+
+    // 🌟 INTEGRACIÓN DEL NUEVO ESCUCHADOR DE EVENTO PARA ACTUALIZAR EL ORO TRAS LA COMPRA
+    socket.on('comprar_item', (exito) => {
+        if (exito) {
+            log('🛒 ¡Compra realizada con éxito! Actualizando oro...');
+            // Solicitamos de nuevo todos los personajes al servidor para actualizar las vistas y el marcador de oro
+            socket.emit('personajes');
+        } else {
+            log('❌ No se ha podido completar la transacción.');
+        }
+    });
+
+    /* ── Modal requisitos habilidades ── */
     function abrirModalRequisitos(idHabilidad, nombreHabilidad) {
         habilidadPendienteId = idHabilidad;
         document.getElementById('modal-titulo').textContent    = `🔓 Desbloquear: ${nombreHabilidad}`;
         document.getElementById('modal-subtitulo').textContent = 'Requisitos necesarios para desbloquear esta habilidad.';
         document.getElementById('modal-requisitos').innerHTML  = '<li style="color:#888;">Cargando...</li>';
-        document.getElementById('btn-confirmar-desbloqueo').disabled = true;
+
+        const btnConfirmar = document.getElementById('btn-confirmar-modal');
+        btnConfirmar.textContent = '🔓 Confirmar desbloqueo';
+        btnConfirmar.setAttribute('onclick', 'confirmarDesbloqueo()');
+        btnConfirmar.disabled = true;
+
         document.getElementById('modal-overlay').classList.add('visible');
         socket.emit('obtener_requisitos_habilidad', { id_habilidad: idHabilidad, id_personaje: personajeHabId });
     }
@@ -639,7 +691,7 @@
         lista.innerHTML = '';
         if (!requisitos || requisitos.length === 0) {
             lista.innerHTML = '<li style="color:#888;">Sin requisitos registrados.</li>';
-            document.getElementById('btn-confirmar-desbloqueo').disabled = false;
+            document.getElementById('btn-confirmar-modal').disabled = false;
             return;
         }
         const todosCumplidos = requisitos.every(r => r.cumplido);
@@ -654,18 +706,21 @@
                     </div>
                 </li>`;
         });
-        document.getElementById('btn-confirmar-desbloqueo').disabled = !todosCumplidos;
+        document.getElementById('btn-confirmar-modal').disabled = !todosCumplidos;
     });
 
     function cerrarModal() {
         document.getElementById('modal-overlay').classList.remove('visible');
         habilidadPendienteId = null;
+        itemTiendaPendiente = null;
     }
+
     function confirmarDesbloqueo() {
         if (!habilidadPendienteId) return;
         socket.emit('desbloquear_habilidad', { id_personaje: personajeHabId, id_habilidad: habilidadPendienteId });
         cerrarModal();
     }
+
     socket.on('desbloquear_habilidad', (res) => {
         log(res ? '🔓 ¡Habilidad desbloqueada!' : '❌ Requisitos no cumplidos.');
         if (res) socket.emit('mostrar_habilidades', { id_personaje: personajeHabId });
@@ -682,7 +737,10 @@
         el.innerText   = data.connected ? '🟢 Base de Datos: Conectada' : '🔴 Base de Datos: Error';
         el.style.color = data.connected ? '#2ecc71' : '#e74c3c';
     });
-    socket.on('status', (data) => log(data.msg));
+    socket.on('status', (data) => {
+        log(data.msg);
+        socket.emit('personajes');
+    });
 </script>
 </body>
 </html>

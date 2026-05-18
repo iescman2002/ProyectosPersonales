@@ -114,5 +114,12 @@ def ver_inventario(data):
 @socketio.on('ver_tienda')
 def ver_tienda():
     emit("ver_tienda",Items.obtener_items())
+@socketio.on('comprar_item')
+def comprar_item(data):
+    id_pj = int(data.get('id_personaje'))
+    id_item = int(data.get('id_item'))
+    precio_item = int(data.get('precio_item'))
+    emit("comprar_item", Inventario.comprar_item(id_item, id_pj, precio_item))
+
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
