@@ -1,5 +1,4 @@
 from database.ConexionDB import conectar_bd
-from models.Habilidades import Habilidades
 
 
 class Personaje:
@@ -53,3 +52,13 @@ class Personaje:
             except Exception as e:
                 print(f"❌ Error al consultar personajes: {e}")
         return personajes_data
+    @classmethod
+    def actualizar_oro_pj(cls, id_pj, oro_a_agregar):
+        # Se actualiza el oro del personaje tras gastarlo o tras ganar (oro_a_agregar puede ser negativo y restar o positivo y sumar, es generico)
+        with conectar_bd() as conexion:
+            try:
+                with conexion.cursor() as cursor:
+                    cursor.execute("UPDATE personajes SET oro = oro + %s WHERE id = %s", (oro_a_agregar, id_pj))
+                    conexion.commit()
+            except Exception as e:
+                print("Error actualizando el oro del personaje: ", e)
