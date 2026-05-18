@@ -111,6 +111,8 @@ def obtener_requisitos_habilidad(data):
 def ver_inventario(data):
     id_pj = int(data.get('id_personaje'))
     emit("ver_inventario", Inventario.obtener_inventario_pj(id_pj))
-
+@socketio.on('ver_tienda')
+def ver_tienda():
+    emit("ver_tienda",Items.obtener_items())
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

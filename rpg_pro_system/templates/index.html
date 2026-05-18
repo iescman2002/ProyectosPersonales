@@ -75,7 +75,7 @@
         .habilidad-info { flex-grow: 1; }
         .habilidad-info small { color: #999; line-height: 1.7; display: block; margin-top: 4px; }
 
-        /* ── Inventario ── */
+        /* ── Inventario y Tienda ── */
         .inventario-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 15px; margin-top: 20px;
@@ -119,6 +119,16 @@
         }
         .inv-stat-card .num { font-size: 1.6em; font-weight: bold; color: var(--primary-color); }
         .inv-stat-card .lbl { font-size: 0.75em; color: #666; margin-top: 2px; }
+
+        /* Contenedor inline para controles de filtrado */
+        .tienda-controles {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            align-items: end;
+            margin: 15px 0;
+        }
+        .tienda-controles select { margin: 0; }
 
         /* ── Badges ── */
         .badge {
@@ -212,6 +222,7 @@
     <div class="nav-section-title">Personaje</div>
     <div class="nav-item" onclick="showView('mejorar', this)">⚔️ Habilidades</div>
     <div class="nav-item" onclick="showView('inventario', this)">🎒 Inventario</div>
+    <div class="nav-item" onclick="showView('tienda', this)">🛒 Tienda</div>
 </nav>
 
 <main>
@@ -267,6 +278,54 @@
         </div>
     </section>
 
+    <!-- TIENDA -->
+    <section id="view-tienda" class="view-section">
+        <h1>🛒 Tienda de Objetos</h1>
+        <div id="tienda_personaje_grid" class="personaje-grid"></div>
+        <hr style="border:0.5px solid #333; margin:30px 0;">
+
+        <div class="tienda-controles">
+            <div>
+                <h3>1. Selecciona un personaje comprador</h3>
+                <select id="select-personaje-tienda" onchange="seleccionarPersonajeTienda()">
+                    <option value="">-- Elige un personaje --</option>
+                </select>
+            </div>
+            <!-- MEJORA: Resumen visual para destacar el oro de forma clara -->
+            <div id="tienda-oro-resumen" style="display: none;">
+                <div class="inv-stat-card" style="border-color: #f1c40f;">
+                    <div class="num" id="tienda-oro-pj" style="color: #f1c40f;">0g</div>
+                    <div class="lbl">Oro disponible</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tienda_container" style="display:none; margin-top:20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3>2. Artículos Disponibles (Ordenados por Rareza 📈)</h3>
+                <!-- MEJORA: Filtro por categoría/tipo de ítem -->
+                <div style="width: 250px;">
+                    <select id="filtro-tipo-tienda" onchange="filtrarYRenderizarTienda()" style="margin: 0;">
+                        <option value="TODOS">🏪 Ver Todo (Tienda Principal)</option>
+                        <option value="Arma">⚔️ Armas</option>
+                        <option value="Armadura">🛡️ Armaduras</option>
+                        <option value="Escudo">🪃 Escudos</option>
+                        <option value="Consumible">🧪 Consumibles</option>
+                        <option value="Accesorio">💍 Accesorios</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="leyenda">
+                <div class="leyenda-item"><div class="leyenda-dot" style="background:#aaa"></div>Común</div>
+                <div class="leyenda-item"><div class="leyenda-dot" style="background:#4a90e2"></div>Raro</div>
+                <div class="leyenda-item"><div class="leyenda-dot" style="background:#9b59b6"></div>Épico</div>
+                <div class="leyenda-item"><div class="leyenda-dot" style="background:#f39c12"></div>Legendario</div>
+            </div>
+            <div class="inventario-grid" id="lista_tienda"></div>
+        </div>
+    </section>
+
     <div id="log">> Esperando acciones...</div>
 </main>
 
@@ -289,7 +348,14 @@
     const socket = io();
     let personajeHabId       = null;
     let personajeInvId       = null;
+    let personajeTiendaId    = null;
     let habilidadPendienteId = null;
+
+    // Cache local de ítems de la tienda para poder aplicar filtros instantáneos
+    let cacheItemsTienda     = [];
+
+    // Mapa de pesos para ordenar por rareza de menor a mayor
+    const rarezaPesos = { 'Común': 1, 'Raro': 2, 'Épico': 3, 'Legendario': 4 };
 
     /* ── Vistas ── */
     function showView(v, el) {
@@ -297,18 +363,29 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById('view-' + v).classList.add('view-active');
         if (el) el.classList.add('active');
-        if (v === 'mejorar' || v === 'inventario') socket.emit('personajes');
+        if (v === 'mejorar' || v === 'inventario' || v === 'tienda') socket.emit('personajes');
     }
 
-    /* ── Personajes — un solo socket, rellena ambas secciones ── */
+    /* ── Personajes ── */
     socket.on('personajes', (personajes) => {
         poblarPersonajes(personajes, 'hab_personaje_grid', 'select-personaje-hab');
         poblarPersonajes(personajes, 'inv_personaje_grid', 'select-personaje-inv');
+        poblarPersonajes(personajes, 'tienda_personaje_grid', 'select-personaje-tienda');
+
+        // Actualizar el oro destacado si ya hay un personaje comprador seleccionado
+        if (personajeTiendaId) {
+            const pjSeleccionado = personajes.find(p => p.id == personajeTiendaId);
+            if (pjSeleccionado) {
+                document.getElementById('tienda-oro-pj').innerText = `${pjSeleccionado.oro}g`;
+                document.getElementById('tienda-oro-resumen').style.display = 'block';
+            }
+        }
     });
 
     function poblarPersonajes(personajes, gridId, selectId) {
         const grid   = document.getElementById(gridId);
         const select = document.getElementById(selectId);
+        if(!grid || !select) return;
         grid.innerHTML   = '';
         select.innerHTML = '<option value="">-- Elige un personaje --</option>';
         personajes.forEach(p => {
@@ -321,6 +398,10 @@
                 </div>`;
             select.innerHTML += `<option value="${p.id}">${p.nombre} (ID: ${p.id})</option>`;
         });
+
+        if (selectId === 'select-personaje-tienda' && personajeTiendaId) {
+            select.value = personajeTiendaId;
+        }
     }
 
     /* ── Habilidades ── */
@@ -345,10 +426,10 @@
         }
         habilidades.forEach(h => {
             const esAvanzada   = h.habilidad_avanzada === true;
-            const desbloqueada = h.habilidad_desbloqueada === true;
+            const自由 = h.habilidad_desbloqueada === true;
             const enNivelMax   = h.nivel_actual >= h.nivel_maximo;
             let estadoClase, botonHTML;
-            if (esAvanzada && !desbloqueada) {
+            if (esAvanzada && !自由) {
                 estadoClase = 'estado-bloqueada';
                 botonHTML = `<button class="btn btn-desbloquear" onclick="abrirModalRequisitos(${h.id}, '${h.nombre}')">🔒 Desbloquear</button>`;
             } else if (enNivelMax) {
@@ -361,8 +442,8 @@
             const badgeTipo     = `<span class="badge badge-${h.tipo}">${h.tipo}</span>`;
             const badgeAvanzada = esAvanzada ? `<span class="badge badge-avanzada">⚔️ Avanzada</span>` : '';
             const badgeEstado   = esAvanzada
-                ? (desbloqueada ? `<span class="badge badge-desbloqueada">✅ Desbloqueada</span>`
-                                : `<span class="badge badge-bloqueada">🔒 Bloqueada</span>`) : '';
+                ? (自由 ? `<span class="badge badge-desbloqueada">✅ Desbloqueada</span>`
+                        : `<span class="badge badge-bloqueada">🔒 Bloqueada</span>`) : '';
             const pct   = h.nivel_maximo > 0 ? (h.nivel_actual / h.nivel_maximo) * 100 : 0;
             const barra = `<div class="nivel-bar-bg"><div class="nivel-bar-fill" style="width:${pct}%"></div></div>`;
             container.innerHTML += `
@@ -456,6 +537,91 @@
                 </div>`;
         });
     });
+
+    /* ── Tienda ── */
+    function seleccionarPersonajeTienda() {
+        personajeTiendaId = document.getElementById('select-personaje-tienda').value;
+        const container = document.getElementById('tienda_container');
+        const resumenOro = document.getElementById('tienda-oro-resumen');
+
+        if (personajeTiendaId) {
+            container.style.display = 'block';
+            document.getElementById('lista_tienda').innerHTML = '<p>Abriendo catálogo de la tienda...</p>';
+            // Resetear filtro al cambiar de personaje
+            document.getElementById('filtro-tipo-tienda').value = 'TODOS';
+            // Volver a pedir datos generales de personajes para refrescar el marcador de oro preciso
+            socket.emit('personajes');
+            socket.emit('ver_tienda');
+        } else {
+            container.style.display = 'none';
+            resumenOro.style.display = 'none';
+        }
+    }
+
+    socket.on('ver_tienda', (items) => {
+        // Almacenamos la lista completa original en la caché
+        cacheItemsTienda = items || [];
+        // Ordenamos la caché por rareza de menor a mayor
+        cacheItemsTienda.sort((a, b) => {
+            const pesoA = rarezaPesos[a.rareza] || 0;
+            const pesoB = rarezaPesos[b.rareza] || 0;
+            return pesoA - pesoB;
+        });
+        // Renderizamos
+        filtrarYRenderizarTienda();
+    });
+
+    // Función encargada de filtrar y pintar las tarjetas ordenadas
+    function filtrarYRenderizarTienda() {
+        const grid = document.getElementById('lista_tienda');
+        const filtro = document.getElementById('filtro-tipo-tienda').value;
+        grid.innerHTML = '';
+
+        // Filtrado por tipo de item
+        const itemsFiltrados = cacheItemsTienda.filter(it => {
+            if (filtro === 'TODOS') return true;
+            return it.tipo === filtro;
+        });
+
+        if (itemsFiltrados.length === 0) {
+            grid.innerHTML = '<p style="color:#888; padding: 10px;">No hay artículos disponibles en esta categoría.</p>';
+            return;
+        }
+
+        const iconoTipo = { 'Arma':'⚔️','Armadura':'🛡️','Consumible':'🧪','Accesorio':'💍','Escudo':'🪃' };
+
+        itemsFiltrados.forEach(it => {
+            const stats = [
+                { lbl: '❤️ Vida',         val: it.mod_vida },
+                { lbl: '💧 Maná',         val: it.mod_mana },
+                { lbl: '💪 Fuerza',       val: it.mod_fuerza },
+                { lbl: '🦶 Agilidad',     val: it.mod_agilidad },
+                { lbl: '🧠 Inteligencia', val: it.mod_inteligencia },
+                { lbl: '🗡️ Daño bonus',  val: it.dano_bonus },
+            ].filter(s => s.val !== 0);
+
+            const statsHTML = stats.length > 0
+                ? `<div class="item-stats">${stats.map(s =>
+                    `<div class="stat positivo"><span>${s.lbl}</span><strong>+${s.val}</strong></div>`
+                  ).join('')}</div>`
+                : `<div style="font-size:0.78em;color:#555;margin-bottom:10px;">Sin modificadores</div>`;
+
+            grid.innerHTML += `
+                <div class="item-card rareza-${it.rareza}">
+                    <div class="item-nombre">
+                        ${iconoTipo[it.tipo] || '📦'} ${it.nombre}
+                        <span class="badge badge-rareza-${it.rareza}">${it.rareza}</span>
+                        <span class="badge badge-tipo">${it.tipo}</span>
+                    </div>
+                    <div class="item-desc">${it.descripcion || ''}</div>
+                    ${statsHTML}
+                    <div class="item-footer">
+                        <span>Precio: <strong style="color:#f1c40f;">💰 ${it.precio}g</strong></span>
+                        <button class="btn btn-subir" style="padding: 4px 10px; font-size: 0.8em;">🛒 Comprar</button>
+                    </div>
+                </div>`;
+        });
+    }
 
     /* ── Modal requisitos ── */
     function abrirModalRequisitos(idHabilidad, nombreHabilidad) {
