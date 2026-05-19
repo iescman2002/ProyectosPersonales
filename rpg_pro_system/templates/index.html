@@ -52,7 +52,7 @@
         .view-section { display: none; }
         .view-active  { display: block; }
 
-        /* ── Personajes ── */
+        /* ── Personajes (grid genérico) ── */
         .personaje-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 15px; margin-top: 20px;
@@ -62,6 +62,47 @@
             border-radius: 6px; border-left: 4px solid var(--primary-color);
         }
         .personaje-card p { margin: 5px 0; font-size: 0.85em; color: #bbb; }
+
+        /* ── Personajes (grid combate con más detalle) ── */
+        .combate-personaje-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 18px; margin-top: 20px;
+        }
+        .combate-card {
+            background: #1e1e1e;
+            border: 1px solid #3a3a3a;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 18px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .combate-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.15);
+        }
+        .combate-card-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #2e2e2e;
+        }
+        .combate-card-nombre { font-size: 1.05em; font-weight: bold; color: #f0f0f0; }
+        .combate-card-nivel {
+            background: #1a3a1a; color: #4CAF50; border: 1px solid #4CAF50;
+            padding: 2px 10px; border-radius: 10px; font-size: 0.78em; font-weight: bold;
+            white-space: nowrap;
+        }
+        .combate-stats-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px;
+        }
+        .combate-stat {
+            display: flex; align-items: center; gap: 7px; font-size: 0.82em;
+        }
+        .combate-stat-icono { font-size: 1em; width: 18px; text-align: center; }
+        .combate-stat-label { color: #777; flex-grow: 1; }
+        .combate-stat-valor { font-weight: bold; color: #e0e0e0; }
+        .combate-card-footer {
+            margin-top: 12px; padding-top: 10px; border-top: 1px solid #2e2e2e;
+            font-size: 0.75em; color: #555; display: flex; gap: 12px;
+        }
 
         /* ── Habilidades ── */
         .habilidad-item {
@@ -121,11 +162,8 @@
         .inv-stat-card .lbl { font-size: 0.75em; color: #666; margin-top: 2px; }
 
         .tienda-controles {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            align-items: end;
-            margin: 15px 0;
+            display: grid; grid-template-columns: 2fr 1fr;
+            gap: 20px; align-items: end; margin: 15px 0;
         }
         .tienda-controles select { margin: 0; }
 
@@ -222,6 +260,8 @@
     <div class="nav-item" onclick="showView('mejorar', this)">⚔️ Habilidades</div>
     <div class="nav-item" onclick="showView('inventario', this)">🎒 Inventario</div>
     <div class="nav-item" onclick="showView('tienda', this)">🛒 Tienda</div>
+    <div class="nav-section-title">Aventura</div>
+    <div class="nav-item" onclick="showView('combate', this)">🏟️ Combate</div>
 </nav>
 
 <main>
@@ -312,7 +352,6 @@
                     </select>
                 </div>
             </div>
-
             <div class="leyenda">
                 <div class="leyenda-item"><div class="leyenda-dot" style="background:#aaa"></div>Común</div>
                 <div class="leyenda-item"><div class="leyenda-dot" style="background:#4a90e2"></div>Raro</div>
@@ -320,6 +359,22 @@
                 <div class="leyenda-item"><div class="leyenda-dot" style="background:#f39c12"></div>Legendario</div>
             </div>
             <div class="inventario-grid" id="lista_tienda"></div>
+        </div>
+    </section>
+
+    <!-- COMBATE -->
+    <section id="view-combate" class="view-section">
+        <h1>🏟️ Arena de Combate</h1>
+        <!-- Grid con tarjetas detalladas específicas para combate -->
+        <div id="combate_personaje_grid" class="combate-personaje-grid"></div>
+        <hr style="border:0.5px solid #333; margin:30px 0;">
+        <h3>1. Selecciona tu personaje luchador</h3>
+        <select id="select-personaje-combate" onchange="seleccionarPersonajeCombate()">
+            <option value="">-- Elige un personaje --</option>
+        </select>
+        <div id="combate_container" style="display:none; margin-top:20px;">
+            <h3>2. Interfaz de Batalla</h3>
+            <p style="color: #bbb; font-style: italic;">Tu personaje está listo para la acción. ¡Desarrolla aquí tu sistema de combate por Socket.io!</p>
         </div>
     </section>
 
@@ -343,9 +398,10 @@
 
 <script>
     const socket = io();
-    let personajeHabId        = null;
-    let personajeInvId        = null;
-    let personajeTiendaId     = null;
+    let personajeHabId       = null;
+    let personajeInvId       = null;
+    let personajeTiendaId    = null;
+    let personajeCombateId   = null;
     let habilidadPendienteId = null;
     let itemTiendaPendiente  = null;
     let listaPersonajesCache = [];
@@ -359,18 +415,19 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById('view-' + v).classList.add('view-active');
         if (el) el.classList.add('active');
-        if (v === 'mejorar' || v === 'inventario' || v === 'tienda') socket.emit('personajes');
+        if (v === 'mejorar' || v === 'inventario' || v === 'tienda' || v === 'combate') socket.emit('personajes');
     }
 
     /* ── Personajes ── */
     socket.on('personajes', (personajes) => {
         listaPersonajesCache = personajes;
-        poblarPersonajes(personajes, 'hab_personaje_grid', 'select-personaje-hab');
-        poblarPersonajes(personajes, 'inv_personaje_grid', 'select-personaje-inv');
+        poblarPersonajes(personajes, 'hab_personaje_grid',    'select-personaje-hab');
+        poblarPersonajes(personajes, 'inv_personaje_grid',    'select-personaje-inv');
         poblarPersonajes(personajes, 'tienda_personaje_grid', 'select-personaje-tienda');
+        poblarPersonajesCombate(personajes);  // Tarjetas detalladas para combate
 
         if (personajeTiendaId) {
-            const pjSeleccionado = personajes.find(p => p.id == personajeTiendaId);
+            const pjSeleccionado = personajes.find(p => p.id_pj == personajeTiendaId);
             if (pjSeleccionado) {
                 document.getElementById('tienda-oro-pj').innerText = `${pjSeleccionado.oro}g`;
                 document.getElementById('tienda-oro-resumen').style.display = 'block';
@@ -378,29 +435,87 @@
         }
     });
 
+    /* Grid genérico (habilidades, inventario, tienda) */
     function poblarPersonajes(personajes, gridId, selectId) {
         const grid   = document.getElementById(gridId);
         const select = document.getElementById(selectId);
-        if(!grid || !select) return;
+        if (!grid || !select) return;
         const currentVal = select.value;
         grid.innerHTML   = '';
         select.innerHTML = '<option value="">-- Elige un personaje --</option>';
         personajes.forEach(p => {
             grid.innerHTML += `
                 <div class="personaje-card">
-                    <strong>ID: ${p.id} — ${p.nombre}</strong>
+                    <strong>ID: ${p.id_pj} — ${p.nombre}</strong>
                     <p>Nivel: ${p.nivel} | Oro: ${p.oro}g</p>
-                    <p>Vida: ${p.vida_actual} | Exp: ${p.exp}</p>
+                    <p>Vida: ${p.vida_max} | Exp: ${p.exp}</p>
                     <p><small>Raza ID: ${p.id_raza} | Clase ID: ${p.id_clase}</small></p>
                 </div>`;
-            select.innerHTML += `<option value="${p.id}">${p.nombre} (ID: ${p.id})</option>`;
+            select.innerHTML += `<option value="${p.id_pj}">${p.nombre} (ID: ${p.id_pj})</option>`;
+        });
+        if (currentVal) select.value = currentVal;
+        else if (selectId === 'select-personaje-tienda' && personajeTiendaId) select.value = personajeTiendaId;
+    }
+
+    /* Grid detallado exclusivo para Combate */
+    function poblarPersonajesCombate(personajes) {
+        const grid   = document.getElementById('combate_personaje_grid');
+        const select = document.getElementById('select-personaje-combate');
+        if (!grid || !select) return;
+        const currentVal = select.value;
+        grid.innerHTML   = '';
+        select.innerHTML = '<option value="">-- Elige un personaje --</option>';
+
+        personajes.forEach(p => {
+            grid.innerHTML += `
+                <div class="combate-card">
+                    <div class="combate-card-header">
+                        <div class="combate-card-nombre">⚔️ ${p.nombre}</div>
+                        <span class="combate-card-nivel">Nv. ${p.nivel}</span>
+                    </div>
+                    <div class="combate-stats-grid">
+                        <div class="combate-stat">
+                            <span class="combate-stat-icono">❤️</span>
+                            <span class="combate-stat-label">Vida</span>
+                            <span class="combate-stat-valor">${p.vida_max}</span>
+                        </div>
+                        <div class="combate-stat">
+                            <span class="combate-stat-icono">💧</span>
+                            <span class="combate-stat-label">Maná</span>
+                            <span class="combate-stat-valor">${p.mana_max}</span>
+                        </div>
+                        <div class="combate-stat">
+                            <span class="combate-stat-icono">💪</span>
+                            <span class="combate-stat-label">Fuerza</span>
+                            <span class="combate-stat-valor">${p.fuerza}</span>
+                        </div>
+                        <div class="combate-stat">
+                            <span class="combate-stat-icono">🦶</span>
+                            <span class="combate-stat-label">Agilidad</span>
+                            <span class="combate-stat-valor">${p.agilidad}</span>
+                        </div>
+                        <div class="combate-stat">
+                            <span class="combate-stat-icono">🧠</span>
+                            <span class="combate-stat-label">Inteligencia</span>
+                            <span class="combate-stat-valor">${p.inteligencia}</span>
+                        </div>
+                        <div class="combate-stat">
+                            <span class="combate-stat-icono">✨</span>
+                            <span class="combate-stat-label">Exp</span>
+                            <span class="combate-stat-valor">${p.exp}</span>
+                        </div>
+                    </div>
+                    <div class="combate-card-footer">
+                        <span>🏷️ Raza ID: ${p.id_raza}</span>
+                        <span>🗡️ Clase ID: ${p.id_clase}</span>
+                        <span>💰 ${p.oro}g</span>
+                    </div>
+                </div>`;
+            select.innerHTML += `<option value="${p.id_pj}">${p.nombre} (ID: ${p.id_pj})</option>`;
         });
 
-        if (currentVal) {
-            select.value = currentVal;
-        } else if (selectId === 'select-personaje-tienda' && personajeTiendaId) {
-            select.value = personajeTiendaId;
-        }
+        if (currentVal) select.value = currentVal;
+        else if (personajeCombateId) select.value = personajeCombateId;
     }
 
     /* ── Habilidades ── */
@@ -424,9 +539,9 @@
             return;
         }
         habilidades.forEach(h => {
-            const esAvanzada   = h.habilidad_avanzada === true;
+            const esAvanzada        = h.habilidad_avanzada === true;
             const tieneDesbloqueada = h.habilidad_desbloqueada === true;
-            const enNivelMax   = h.nivel_actual >= h.nivel_maximo;
+            const enNivelMax        = h.nivel_actual >= h.nivel_maximo;
             let estadoClase, botonHTML;
             if (esAvanzada && !tieneDesbloqueada) {
                 estadoClase = 'estado-bloqueada';
@@ -441,8 +556,9 @@
             const badgeTipo     = `<span class="badge badge-${h.tipo}">${h.tipo}</span>`;
             const badgeAvanzada = esAvanzada ? `<span class="badge badge-avanzada">⚔️ Avanzada</span>` : '';
             const badgeEstado   = esAvanzada
-                ? (tieneDesbloqueada ? `<span class="badge badge-desbloqueada">✅ Desbloqueada</span>`
-                        : `<span class="badge badge-bloqueada">🔒 Bloqueada</span>`) : '';
+                ? (tieneDesbloqueada
+                    ? `<span class="badge badge-desbloqueada">✅ Desbloqueada</span>`
+                    : `<span class="badge badge-bloqueada">🔒 Bloqueada</span>`) : '';
             const pct   = h.nivel_maximo > 0 ? (h.nivel_actual / h.nivel_maximo) * 100 : 0;
             const barra = `<div class="nivel-bar-bg"><div class="nivel-bar-fill" style="width:${pct}%"></div></div>`;
             container.innerHTML += `
@@ -540,12 +656,28 @@
         });
     });
 
+    /* ── Equipar / Desequipar ── */
+    function equiparDesequiparItem(idItem, equipado) {
+        socket.emit('equipar_desequipar_item', {
+            id_personaje: personajeInvId,
+            id_item: idItem,
+            equipado: equipado
+        });
+    }
+    socket.on('equipar_desequipar_item', (exito) => {
+        if (exito) {
+            log('✅ Item actualizado correctamente.');
+            socket.emit('ver_inventario', { id_personaje: personajeInvId });
+        } else {
+            log('❌ No se pudo actualizar el item.');
+        }
+    });
+
     /* ── Tienda ── */
     function seleccionarPersonajeTienda() {
         personajeTiendaId = document.getElementById('select-personaje-tienda').value;
-        const container = document.getElementById('tienda_container');
+        const container  = document.getElementById('tienda_container');
         const resumenOro = document.getElementById('tienda-oro-resumen');
-
         if (personajeTiendaId) {
             container.style.display = 'block';
             document.getElementById('lista_tienda').innerHTML = '<p>Abriendo catálogo de la tienda...</p>';
@@ -560,31 +692,20 @@
 
     socket.on('ver_tienda', (items) => {
         cacheItemsTienda = items || [];
-        cacheItemsTienda.sort((a, b) => {
-            const pesoA = rarezaPesos[a.rareza] || 0;
-            const pesoB = rarezaPesos[b.rareza] || 0;
-            return pesoA - pesoB;
-        });
+        cacheItemsTienda.sort((a, b) => (rarezaPesos[a.rareza] || 0) - (rarezaPesos[b.rareza] || 0));
         filtrarYRenderizarTienda();
     });
 
     function filtrarYRenderizarTienda() {
-        const grid = document.getElementById('lista_tienda');
+        const grid   = document.getElementById('lista_tienda');
         const filtro = document.getElementById('filtro-tipo-tienda').value;
         grid.innerHTML = '';
-
-        const itemsFiltrados = cacheItemsTienda.filter(it => {
-            if (filtro === 'TODOS') return true;
-            return it.tipo === filtro;
-        });
-
+        const itemsFiltrados = cacheItemsTienda.filter(it => filtro === 'TODOS' || it.tipo === filtro);
         if (itemsFiltrados.length === 0) {
             grid.innerHTML = '<p style="color:#888; padding: 10px;">No hay artículos disponibles en esta categoría.</p>';
             return;
         }
-
         const iconoTipo = { 'Arma':'⚔️','Armadura':'🛡️','Consumible':'🧪','Accesorio':'💍','Escudo':'🪃' };
-
         itemsFiltrados.forEach(it => {
             const stats = [
                 { lbl: '❤️ Vida',         val: it.mod_vida },
@@ -594,13 +715,11 @@
                 { lbl: '🧠 Inteligencia', val: it.mod_inteligencia },
                 { lbl: '🗡️ Daño bonus',  val: it.dano_bonus },
             ].filter(s => s.val !== 0);
-
             const statsHTML = stats.length > 0
                 ? `<div class="item-stats">${stats.map(s =>
                     `<div class="stat positivo"><span>${s.lbl}</span><strong>+${s.val}</strong></div>`
                   ).join('')}</div>`
                 : `<div style="font-size:0.78em;color:#555;margin-bottom:10px;">Sin modificadores</div>`;
-
             grid.innerHTML += `
                 <div class="item-card rareza-${it.rareza}">
                     <div class="item-nombre">
@@ -612,30 +731,24 @@
                     ${statsHTML}
                     <div class="item-footer">
                         <span>Precio: <strong style="color:#f1c40f;">💰 ${it.precio}g</strong></span>
-                        <button class="btn btn-subir" style="padding: 4px 10px; font-size: 0.8em;" onclick="abrirModalCompra(${it.id}, '${it.nombre}', ${it.precio})">🛒 Comprar</button>
+                        <button class="btn btn-subir" style="padding: 4px 10px; font-size: 0.8em;"
+                            onclick="abrirModalCompra(${it.id}, '${it.nombre}', ${it.precio})">🛒 Comprar</button>
                     </div>
                 </div>`;
         });
     }
 
-    /* ── Submenú / Modal para Compra de Objetos ── */
+    /* ── Modal Compra ── */
     function abrirModalCompra(idItem, nombreItem, precioItem) {
         itemTiendaPendiente = { id: idItem, nombre: nombreItem, precio: precioItem };
-
-        const pj = listaPersonajesCache.find(p => p.id == personajeTiendaId);
-        const oroActual = pj ? pj.oro : 0;
+        const pj         = listaPersonajesCache.find(p => p.id_pj == personajeTiendaId);
+        const oroActual  = pj ? pj.oro : 0;
         const puedeComprar = oroActual >= precioItem;
+        const balanceHTML  = puedeComprar
+            ? `Oro restante tras compra: ${oroActual - precioItem}g`
+            : `Falta: ${precioItem - oroActual} Oro`;
 
-        let balanceHTML = '';
-        if (puedeComprar) {
-            const oroRestante = oroActual - precioItem;
-            balanceHTML = `Oro restante tras compra: ${oroRestante}g`;
-        } else {
-            const oroFaltante = precioItem - oroActual;
-            balanceHTML = `Falta: ${oroFaltante} Oro`;
-        }
-
-        document.getElementById('modal-titulo').textContent = `🛒 Confirmar Compra: ${nombreItem}`;
+        document.getElementById('modal-titulo').textContent    = `🛒 Confirmar Compra: ${nombreItem}`;
         document.getElementById('modal-subtitulo').textContent = 'Comprueba los fondos de tu personaje antes de adquirir el artículo.';
 
         const btnConfirmar = document.getElementById('btn-confirmar-modal');
@@ -643,37 +756,49 @@
         btnConfirmar.setAttribute('onclick', 'confirmarCompra()');
         btnConfirmar.disabled = !puedeComprar;
 
-        const lista = document.getElementById('modal-requisitos');
-        lista.innerHTML = `
+        document.getElementById('modal-requisitos').innerHTML = `
             <li class="req-item ${puedeComprar ? 'cumplido' : 'pendiente'}">
                 <div class="req-nombre"><span>${puedeComprar ? '✅' : '❌'}</span>${puedeComprar ? 'Balance Suficiente' : 'Oro Insuficiente'}</div>
                 <div class="req-progreso-label">Oro actual: ${oroActual}g | Coste del ítem: ${precioItem}g</div>
-                <div class="req-progreso-label" style="margin-top: 4px; font-weight: bold; color: ${puedeComprar ? '#2ecc71' : '#e74c3c'}">
+                <div class="req-progreso-label" style="margin-top:4px;font-weight:bold;color:${puedeComprar ? '#2ecc71' : '#e74c3c'}">
                     ${balanceHTML}
                 </div>
             </li>`;
-
         document.getElementById('modal-overlay').classList.add('visible');
     }
 
     function confirmarCompra() {
         if (!itemTiendaPendiente || !personajeTiendaId) return;
-        socket.emit('comprar_item', { id_personaje: personajeTiendaId, id_item: itemTiendaPendiente.id, precio_item: itemTiendaPendiente.precio });
+        socket.emit('comprar_item', {
+            id_personaje: personajeTiendaId,
+            id_item: itemTiendaPendiente.id,
+            precio_item: itemTiendaPendiente.precio
+        });
         cerrarModal();
     }
 
-    // 🌟 INTEGRACIÓN DEL NUEVO ESCUCHADOR DE EVENTO PARA ACTUALIZAR EL ORO TRAS LA COMPRA
     socket.on('comprar_item', (exito) => {
         if (exito) {
             log('🛒 ¡Compra realizada con éxito! Actualizando oro...');
-            // Solicitamos de nuevo todos los personajes al servidor para actualizar las vistas y el marcador de oro
             socket.emit('personajes');
         } else {
             log('❌ No se ha podido completar la transacción.');
         }
     });
 
-    /* ── Modal requisitos habilidades ── */
+    /* ── Combate ── */
+    function seleccionarPersonajeCombate() {
+        personajeCombateId = document.getElementById('select-personaje-combate').value;
+        const container = document.getElementById('combate_container');
+        if (personajeCombateId) {
+            container.style.display = 'block';
+            log('🎯 Personaje asignado a la arena de combate. ID: ' + personajeCombateId);
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    /* ── Modal Requisitos Habilidades ── */
     function abrirModalRequisitos(idHabilidad, nombreHabilidad) {
         habilidadPendienteId = idHabilidad;
         document.getElementById('modal-titulo').textContent    = `🔓 Desbloquear: ${nombreHabilidad}`;
@@ -715,7 +840,7 @@
     function cerrarModal() {
         document.getElementById('modal-overlay').classList.remove('visible');
         habilidadPendienteId = null;
-        itemTiendaPendiente = null;
+        itemTiendaPendiente  = null;
     }
 
     function confirmarDesbloqueo() {
@@ -743,22 +868,6 @@
     socket.on('status', (data) => {
         log(data.msg);
         socket.emit('personajes');
-    });
-        function equiparDesequiparItem(idItem, equipado) {
-        socket.emit('equipar_desequipar_item', {
-            id_personaje: personajeInvId,
-            id_item: idItem,
-            equipado: equipado
-        });
-    }
-
-    socket.on('equipar_desequipar_item', (exito) => {
-        if (exito) {
-            log('✅ Item actualizado correctamente.');
-            socket.emit('ver_inventario', { id_personaje: personajeInvId });
-        } else {
-            log('❌ No se pudo actualizar el item.');
-        }
     });
 </script>
 </body>
