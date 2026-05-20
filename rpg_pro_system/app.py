@@ -126,5 +126,8 @@ def equipar_desequipar_item(data):
     id_item = int(data.get('id_item'))
     equipado = data.get('equipado')
     emit("equipar_desequipar_item", Inventario.equipar_desequipar_item(id_item, id_pj, equipado))
+@socketio.on('elegir_enemigo')
+def elegir_enemigo():
+    emit("elegir_enemigo",Enemigos.obtener_enemigos())
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
