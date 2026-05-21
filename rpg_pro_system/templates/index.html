@@ -677,7 +677,7 @@
     }
 
     /* Filtra el caché y pinta las cards del inventario */
-    function filtrarYRenderizarInventario() {
+        function filtrarYRenderizarInventario() {
         const grid   = document.getElementById('lista_inventario');
         const filtro = document.getElementById('filtro-tipo-inventario').value;
         grid.innerHTML = '';
@@ -719,12 +719,14 @@
                     ${statsHTML}
                     <div class="item-footer">
                         <span>💰 ${it.precio}g &nbsp;|&nbsp; ×${it.cantidad}</span>
-                        <button
-                            class="btn ${it.equipado ? 'btn-desbloquear' : 'btn-subir'}"
-                            style="padding: 4px 10px; font-size: 0.8em;"
-                            onclick="equiparDesequiparItem(${it.id_item}, ${it.equipado})">
-                            ${it.equipado ? '🔴 Desequipar' : '🟢 Equipar'}
-                        </button>
+                        ${it.tipo !== 'Consumible' ? `
+                            <button
+                                class="btn ${it.equipado ? 'btn-desbloquear' : 'btn-subir'}"
+                                style="padding: 4px 10px; font-size: 0.8em;"
+                                onclick="equiparDesequiparItem(${it.id_item}, ${it.equipado})">
+                                ${it.equipado ? '🔴 Desequipar' : '🟢 Equipar'}
+                            </button>
+                        ` : ''}
                     </div>
                 </div>`;
         });
