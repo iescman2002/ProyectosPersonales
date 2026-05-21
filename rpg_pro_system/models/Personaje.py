@@ -34,22 +34,35 @@ class Personaje:
                                 p.id_clase,
                                 r.nombre,
                                 c.nombre,
-                                -- Vida total: (vida_base + mod_vida) * dado_vida
-                                p.vida_max + r.mod_vida + c.dado_vida AS vida_total,
-                                -- Mana total: mana_base + mod_mana
-                                p.mana_max + r.mod_mana AS mana_total,
-                                -- Fuerza total: (fuerza_base + mod_fuerza) * factor_dano
-                                (p.fuerza + r.mod_fuerza) * c.factor_dano AS fuerza_total,
-                                -- Agilidad total: agilidad_base + mod_agilidad
-                                p.agilidad + r.mod_agilidad AS agilidad_total,
-                                -- Inteligencia total: inteligencia_base + mod_inteligencia
-                                p.inteligencia + r.mod_inteligencia AS inteligencia_total
+                                -- Vida total: vida_base + mod_vida + dado_vida + bono_vida_item
+                                p.vida_max + r.mod_vida + c.dado_vida + COALESCE(stats_items.bono_vida_items, 0) AS vida_total,
+                                -- Mana total: mana_base + mod_mana + bono_mana_item
+                                p.mana_max + r.mod_mana + COALESCE(stats_items.bono_mana_items, 0) AS mana_total,
+                                -- Fuerza total: (fuerza_base + mod_fuerza) * factor_dano + bono_fuerza_item
+                                (p.fuerza + r.mod_fuerza) * c.factor_dano + COALESCE(stats_items.bono_fuerza_items, 0) AS fuerza_total,
+                                -- Agilidad total: agilidad_base + mod_agilidad + bono_agilidad_item
+                                p.agilidad + r.mod_agilidad + COALESCE(stats_items.bono_agilidad_items, 0) AS agilidad_total,
+                                -- Inteligencia total: inteligencia_base + mod_inteligencia + bono_inteligencia_item
+                                p.inteligencia + r.mod_inteligencia + COALESCE(stats_items.bono_inteligencia_items, 0) AS inteligencia_total
                            FROM personajes p
                            JOIN razas r ON p.id_raza = r.id
-                           JOIN clases_rpg c ON p.id_clase = c.id;
+                           JOIN clases_rpg c ON p.id_clase = c.id
+                           LEFT JOIN (
+                                SELECT
+                                    I.id_personaje,
+                                    COALESCE(SUM(IT.MOD_VIDA*I.CANTIDAD),0) AS BONO_VIDA_ITEMS,
+                                    COALESCE(SUM(IT.mod_mana * I.cantidad), 0) AS BONO_MANA_ITEMS,
+                                    COALESCE(SUM((IT.mod_fuerza + IT.dano_bonus) * I.cantidad), 0) AS BONO_FUERZA_ITEMS,
+                                    COALESCE(SUM(IT.mod_agilidad * I.cantidad), 0) AS BONO_AGILIDAD_ITEMS,
+                                    COALESCE(SUM(IT.mod_inteligencia * I.cantidad), 0) AS BONO_INTELIGENCIA_ITEMS
+                               FROM inventarios I
+                               JOIN ITEMS IT ON IT.ID = I.ID_ITEM
+                               WHERE I.EQUIPADO = TRUE
+                               GROUP BY I.ID_PERSONAJE
+                           ) STATS_ITEMS
+                           ON STATS_ITEMS.ID_PERSONAJE = P.ID
                                    """)
                     filas = cursor.fetchall()
-
                     # 3. Mapeo de filas a objetos y luego a diccionarios (para el emit)
                     for fila in filas:
                         # 1. Sacamos los datos de la fila uno por uno (por orden)
