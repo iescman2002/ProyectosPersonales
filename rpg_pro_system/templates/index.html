@@ -52,7 +52,6 @@
         .view-section { display: none; }
         .view-active  { display: block; }
 
-        /* ── Personajes (grid genérico) ── */
         .personaje-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 15px; margin-top: 20px;
@@ -63,23 +62,16 @@
         }
         .personaje-card p { margin: 5px 0; font-size: 0.85em; color: #bbb; }
 
-        /* ── Personajes (grid combate con más detalle) ── */
         .combate-personaje-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 18px; margin-top: 20px;
         }
         .combate-card {
-            background: #1e1e1e;
-            border: 1px solid #3a3a3a;
-            border-top: 3px solid var(--primary-color);
-            border-radius: 8px;
-            padding: 18px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            background: #1e1e1e; border: 1px solid #3a3a3a;
+            border-top: 3px solid var(--primary-color); border-radius: 8px;
+            padding: 18px; transition: transform 0.2s, box-shadow 0.2s;
         }
-        .combate-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.15);
-        }
+        .combate-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(76,175,80,0.15); }
         .combate-card-header {
             display: flex; justify-content: space-between; align-items: flex-start;
             margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #2e2e2e;
@@ -87,15 +79,10 @@
         .combate-card-nombre { font-size: 1.05em; font-weight: bold; color: #f0f0f0; }
         .combate-card-nivel {
             background: #1a3a1a; color: #4CAF50; border: 1px solid #4CAF50;
-            padding: 2px 10px; border-radius: 10px; font-size: 0.78em; font-weight: bold;
-            white-space: nowrap;
+            padding: 2px 10px; border-radius: 10px; font-size: 0.78em; font-weight: bold; white-space: nowrap;
         }
-        .combate-stats-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px;
-        }
-        .combate-stat {
-            display: flex; align-items: center; gap: 7px; font-size: 0.82em;
-        }
+        .combate-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+        .combate-stat { display: flex; align-items: center; gap: 7px; font-size: 0.82em; }
         .combate-stat-icono { font-size: 1em; width: 18px; text-align: center; }
         .combate-stat-label { color: #777; flex-grow: 1; }
         .combate-stat-valor { font-weight: bold; color: #e0e0e0; }
@@ -104,7 +91,6 @@
             font-size: 0.75em; color: #555; display: flex; gap: 12px;
         }
 
-        /* ── Habilidades ── */
         .habilidad-item {
             background: #2a2a2a; padding: 15px; margin: 10px 0; border-radius: 6px;
             display: flex; justify-content: space-between; align-items: center;
@@ -116,7 +102,6 @@
         .habilidad-info { flex-grow: 1; }
         .habilidad-info small { color: #999; line-height: 1.7; display: block; margin-top: 4px; }
 
-        /* ── Inventario y Tienda ── */
         .inventario-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 15px; margin-top: 20px;
@@ -145,14 +130,6 @@
             display: flex; justify-content: space-between; align-items: center;
             border-top: 1px solid #333; padding-top: 8px; margin-top: 4px; font-size: 0.8em; color: #888;
         }
-        .equipado-badge {
-            background: #1a3a1a; color: #2ecc71; border: 1px solid #2ecc71;
-            padding: 2px 8px; border-radius: 10px; font-size: 0.75em; font-weight: bold;
-        }
-        .no-equipado-badge {
-            background: #2a2a2a; color: #666; border: 1px solid #444;
-            padding: 2px 8px; border-radius: 10px; font-size: 0.75em;
-        }
         .inv-resumen { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
         .inv-stat-card {
             background: #1e1e1e; border: 1px solid #333; border-radius: 6px;
@@ -161,13 +138,20 @@
         .inv-stat-card .num { font-size: 1.6em; font-weight: bold; color: var(--primary-color); }
         .inv-stat-card .lbl { font-size: 0.75em; color: #666; margin-top: 2px; }
 
+        /* ── Cabecera de sección con filtro (compartida inventario/tienda) ── */
+        .seccion-cabecera {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; gap: 20px; flex-wrap: wrap;
+        }
+        .seccion-cabecera h3 { margin: 0; }
+        .seccion-cabecera select { margin: 0; width: 250px; }
+
         .tienda-controles {
             display: grid; grid-template-columns: 2fr 1fr;
             gap: 20px; align-items: end; margin: 15px 0;
         }
         .tienda-controles select { margin: 0; }
 
-        /* ── Badges ── */
         .badge {
             display: inline-block; padding: 2px 8px; border-radius: 10px;
             font-size: 0.72em; font-weight: bold; margin-right: 3px;
@@ -184,14 +168,12 @@
         .badge-rareza-Épico      { background: #2a1a3a; color: #9b59b6; }
         .badge-rareza-Legendario { background: #3a2a0a; color: #f39c12; }
 
-        /* ── Barras ── */
         .nivel-bar-bg {
             background: #3a3a3a; border-radius: 4px; height: 6px;
             width: 120px; display: inline-block; vertical-align: middle;
         }
         .nivel-bar-fill { background: var(--primary-color); height: 6px; border-radius: 4px; }
 
-        /* ── Botones ── */
         .btn { border: none; padding: 8px 14px; cursor: pointer; border-radius: 4px; font-size: 0.85em; white-space: nowrap; transition: 0.2s; }
         .btn-subir             { background: #4CAF50; color: white; }
         .btn-subir:hover       { background: #45a049; }
@@ -216,7 +198,6 @@
             padding: 15px; border-radius: 4px; border: 1px solid #333;
         }
 
-        /* ── Modal ── */
         #modal-overlay {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.75); z-index: 100;
@@ -249,98 +230,55 @@
         .req-bar-fill.pendiente { background: #e74c3c; }
         .modal-acciones { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
 
-        /* ══════════════════════════════════════
-           ARENA DE BATALLA
-        ══════════════════════════════════════ */
-        #batalla-arena {
-            display: none;
-            margin-top: 30px;
-            animation: fadeInUp 0.35s ease;
-        }
+        #batalla-arena { display: none; margin-top: 30px; animation: fadeInUp 0.35s ease; }
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(16px); }
             to   { opacity: 1; transform: translateY(0); }
         }
         .batalla-escenario {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 20px;
-            align-items: stretch;
+            display: grid; grid-template-columns: 1fr auto 1fr;
+            gap: 20px; align-items: stretch;
         }
-
-        /* Tarjeta del combatiente (PJ o Enemigo) */
         .batalla-ficha {
-            background: #181818;
-            border: 1px solid #2e2e2e;
-            border-radius: 10px;
-            padding: 22px;
-            position: relative;
-            overflow: hidden;
+            background: #181818; border: 1px solid #2e2e2e;
+            border-radius: 10px; padding: 22px; position: relative; overflow: hidden;
         }
-        .batalla-ficha::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0; height: 3px;
-        }
+        .batalla-ficha::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
         .batalla-ficha.ficha-heroe::before  { background: linear-gradient(90deg, #4CAF50, #2ecc71); }
         .batalla-ficha.ficha-enemigo::before { background: linear-gradient(90deg, #e74c3c, #c0392b); }
-
         .ficha-encabezado {
             display: flex; justify-content: space-between; align-items: flex-start;
             margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #252525;
         }
-        .ficha-rol {
-            font-size: 0.68em; text-transform: uppercase; letter-spacing: 1.5px;
-            font-weight: bold; margin-bottom: 4px;
-        }
+        .ficha-rol { font-size: 0.68em; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold; margin-bottom: 4px; }
         .ficha-rol.heroe  { color: #4CAF50; }
         .ficha-rol.enemigo { color: #e74c3c; }
         .ficha-nombre { font-size: 1.1em; font-weight: bold; color: #f5f5f5; }
-        .ficha-nivel-badge {
-            padding: 3px 12px; border-radius: 20px; font-size: 0.78em; font-weight: bold;
-        }
+        .ficha-nivel-badge { padding: 3px 12px; border-radius: 20px; font-size: 0.78em; font-weight: bold; }
         .ficha-nivel-badge.heroe  { background: #1a3a1a; color: #4CAF50; border: 1px solid #4CAF50; }
         .ficha-nivel-badge.enemigo { background: #3a1a1a; color: #e74c3c; border: 1px solid #e74c3c; }
-
-        /* Barras de vida / maná */
         .ficha-barra-grupo { margin-bottom: 14px; }
-        .ficha-barra-label {
-            display: flex; justify-content: space-between;
-            font-size: 0.75em; color: #888; margin-bottom: 4px;
-        }
+        .ficha-barra-label { display: flex; justify-content: space-between; font-size: 0.75em; color: #888; margin-bottom: 4px; }
         .ficha-barra-label span:last-child { color: #ccc; font-weight: bold; }
-        .ficha-barra-bg {
-            background: #2a2a2a; border-radius: 6px; height: 10px; overflow: hidden;
-        }
-        .ficha-barra-fill {
-            height: 10px; border-radius: 6px;
-            transition: width 0.6s ease;
-        }
+        .ficha-barra-bg { background: #2a2a2a; border-radius: 6px; height: 10px; overflow: hidden; }
+        .ficha-barra-fill { height: 10px; border-radius: 6px; transition: width 0.6s ease; }
         .ficha-barra-fill.vida  { background: linear-gradient(90deg, #c0392b, #e74c3c); }
         .ficha-barra-fill.mana  { background: linear-gradient(90deg, #2980b9, #3498db); }
-
-        /* Stats en rejilla */
         .ficha-stats {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 8px 12px; margin-top: 14px; padding-top: 12px;
-            border-top: 1px solid #252525;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px;
+            margin-top: 14px; padding-top: 12px; border-top: 1px solid #252525;
         }
-        .ficha-stat {
-            display: flex; align-items: center; gap: 7px; font-size: 0.82em;
-        }
+        .ficha-stat { display: flex; align-items: center; gap: 7px; font-size: 0.82em; }
         .ficha-stat-icono { width: 18px; text-align: center; }
         .ficha-stat-label { color: #666; flex-grow: 1; }
         .ficha-stat-valor { font-weight: bold; color: #ddd; }
-
-        /* Separador VS */
         .batalla-vs {
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center; gap: 10px;
-            padding: 0 10px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 10px; padding: 0 10px;
         }
         .vs-texto {
             font-size: 2em; font-weight: 900; color: #e74c3c;
-            text-shadow: 0 0 20px rgba(231,76,60,0.5);
-            letter-spacing: -1px;
+            text-shadow: 0 0 20px rgba(231,76,60,0.5); letter-spacing: -1px;
             animation: vsPulse 2s ease-in-out infinite;
         }
         @keyframes vsPulse {
@@ -351,8 +289,6 @@
             width: 2px; flex-grow: 1; max-height: 80px;
             background: linear-gradient(to bottom, transparent, #e74c3c, transparent);
         }
-
-        /* Zona de botones de acción (placeholder para el futuro) */
         .batalla-acciones {
             margin-top: 20px; padding: 16px 20px;
             background: #141414; border: 1px dashed #2a2a2a; border-radius: 8px;
@@ -415,7 +351,18 @@
             <option value="">-- Elige un personaje --</option>
         </select>
         <div id="inventario_container" style="display:none; margin-top:20px;">
-            <h3>2. Objetos en el inventario</h3>
+            <!-- Cabecera con título + filtro de tipo -->
+            <div class="seccion-cabecera">
+                <h3>2. Objetos en el inventario</h3>
+                <select id="filtro-tipo-inventario" onchange="filtrarYRenderizarInventario()" style="margin:0; width:250px;">
+                    <option value="TODOS">🎒 Ver Todo</option>
+                    <option value="Arma">⚔️ Armas</option>
+                    <option value="Armadura">🛡️ Armaduras</option>
+                    <option value="Escudo">🪃 Escudos</option>
+                    <option value="Consumible">🧪 Consumibles</option>
+                    <option value="Accesorio">💍 Accesorios</option>
+                </select>
+            </div>
             <div class="inv-resumen" id="inv-resumen"></div>
             <div class="leyenda">
                 <div class="leyenda-item"><div class="leyenda-dot" style="background:#aaa"></div>Común</div>
@@ -449,18 +396,16 @@
         </div>
 
         <div id="tienda_container" style="display:none; margin-top:20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div class="seccion-cabecera">
                 <h3>2. Artículos Disponibles (Ordenados por Rareza 📈)</h3>
-                <div style="width: 250px;">
-                    <select id="filtro-tipo-tienda" onchange="filtrarYRenderizarTienda()" style="margin: 0;">
-                        <option value="TODOS">🏪 Ver Todo (Tienda Principal)</option>
-                        <option value="Arma">⚔️ Armas</option>
-                        <option value="Armadura">🛡️ Armaduras</option>
-                        <option value="Escudo">🪃 Escudos</option>
-                        <option value="Consumible">🧪 Consumibles</option>
-                        <option value="Accesorio">💍 Accesorios</option>
-                    </select>
-                </div>
+                <select id="filtro-tipo-tienda" onchange="filtrarYRenderizarTienda()" style="margin:0; width:250px;">
+                    <option value="TODOS">🏪 Ver Todo (Tienda Principal)</option>
+                    <option value="Arma">⚔️ Armas</option>
+                    <option value="Armadura">🛡️ Armaduras</option>
+                    <option value="Escudo">🪃 Escudos</option>
+                    <option value="Consumible">🧪 Consumibles</option>
+                    <option value="Accesorio">💍 Accesorios</option>
+                </select>
             </div>
             <div class="leyenda">
                 <div class="leyenda-item"><div class="leyenda-dot" style="background:#aaa"></div>Común</div>
@@ -489,31 +434,18 @@
                 <option value="">-- Elige un enemigo --</option>
             </select>
 
-            <!-- ARENA DE BATALLA -->
             <div id="batalla-arena">
                 <hr style="border:0.5px solid #2a2a2a; margin: 24px 0 20px;">
                 <h3 style="margin-bottom: 18px;">⚔️ Vista de Batalla</h3>
-
                 <div class="batalla-escenario">
-                    <!-- Ficha Héroe -->
-                    <div class="batalla-ficha ficha-heroe" id="ficha-heroe">
-                        <!-- renderizado por JS -->
-                    </div>
-
-                    <!-- VS central -->
+                    <div class="batalla-ficha ficha-heroe" id="ficha-heroe"></div>
                     <div class="batalla-vs">
                         <div class="vs-linea"></div>
                         <div class="vs-texto">VS</div>
                         <div class="vs-linea"></div>
                     </div>
-
-                    <!-- Ficha Enemigo -->
-                    <div class="batalla-ficha ficha-enemigo" id="ficha-enemigo">
-                        <!-- renderizado por JS -->
-                    </div>
+                    <div class="batalla-ficha ficha-enemigo" id="ficha-enemigo"></div>
                 </div>
-
-                <!-- Placeholder para futuros botones de acción -->
                 <div class="batalla-acciones">
                     🎮 Aquí irán los botones de acción: Atacar, Inventario, Habilidades, Huir…
                 </div>
@@ -549,8 +481,9 @@
     let itemTiendaPendiente  = null;
     let listaPersonajesCache = [];
     let cacheItemsTienda     = [];
-    let listaEnemigosCache   = [];   // ← nuevo
-    let enemigoSeleccionado  = null; // ← nuevo
+    let cacheItemsInventario = [];   // ← caché para filtrado de inventario
+    let listaEnemigosCache   = [];
+    let enemigoSeleccionado  = null;
 
     const rarezaPesos = { 'Común': 1, 'Raro': 2, 'Épico': 3, 'Legendario': 4 };
 
@@ -579,14 +512,12 @@
             }
         }
 
-        // Actualizar ficha del héroe en la arena si hay combate activo
         if (personajeCombateId && enemigoSeleccionado) {
             const pj = personajes.find(p => p.id_pj == personajeCombateId);
             if (pj) renderFichaHeroe(pj);
         }
     });
 
-    /* Grid genérico */
     function poblarPersonajes(personajes, gridId, selectId) {
         const grid   = document.getElementById(gridId);
         const select = document.getElementById(selectId);
@@ -608,7 +539,6 @@
         else if (selectId === 'select-personaje-tienda' && personajeTiendaId) select.value = personajeTiendaId;
     }
 
-    /* Grid detallado para Combate */
     function poblarPersonajesCombate(personajes) {
         const grid   = document.getElementById('combate_personaje_grid');
         const select = document.getElementById('select-personaje-combate');
@@ -616,7 +546,6 @@
         const currentVal = select.value;
         grid.innerHTML   = '';
         select.innerHTML = '<option value="">-- Elige un personaje --</option>';
-
         personajes.forEach(p => {
             grid.innerHTML += `
                 <div class="combate-card">
@@ -625,36 +554,12 @@
                         <span class="combate-card-nivel">Nv. ${p.nivel}</span>
                     </div>
                     <div class="combate-stats-grid">
-                        <div class="combate-stat">
-                            <span class="combate-stat-icono">❤️</span>
-                            <span class="combate-stat-label">Vida</span>
-                            <span class="combate-stat-valor">${p.vida_max}</span>
-                        </div>
-                        <div class="combate-stat">
-                            <span class="combate-stat-icono">💧</span>
-                            <span class="combate-stat-label">Maná</span>
-                            <span class="combate-stat-valor">${p.mana_max}</span>
-                        </div>
-                        <div class="combate-stat">
-                            <span class="combate-stat-icono">💪</span>
-                            <span class="combate-stat-label">Fuerza</span>
-                            <span class="combate-stat-valor">${p.fuerza}</span>
-                        </div>
-                        <div class="combate-stat">
-                            <span class="combate-stat-icono">🦶</span>
-                            <span class="combate-stat-label">Agilidad</span>
-                            <span class="combate-stat-valor">${p.agilidad}</span>
-                        </div>
-                        <div class="combate-stat">
-                            <span class="combate-stat-icono">🧠</span>
-                            <span class="combate-stat-label">Inteligencia</span>
-                            <span class="combate-stat-valor">${p.inteligencia}</span>
-                        </div>
-                        <div class="combate-stat">
-                            <span class="combate-stat-icono">✨</span>
-                            <span class="combate-stat-label">Exp</span>
-                            <span class="combate-stat-valor">${p.exp}</span>
-                        </div>
+                        <div class="combate-stat"><span class="combate-stat-icono">❤️</span><span class="combate-stat-label">Vida</span><span class="combate-stat-valor">${p.vida_max}</span></div>
+                        <div class="combate-stat"><span class="combate-stat-icono">💧</span><span class="combate-stat-label">Maná</span><span class="combate-stat-valor">${p.mana_max}</span></div>
+                        <div class="combate-stat"><span class="combate-stat-icono">💪</span><span class="combate-stat-label">Fuerza</span><span class="combate-stat-valor">${p.fuerza}</span></div>
+                        <div class="combate-stat"><span class="combate-stat-icono">🦶</span><span class="combate-stat-label">Agilidad</span><span class="combate-stat-valor">${p.agilidad}</span></div>
+                        <div class="combate-stat"><span class="combate-stat-icono">🧠</span><span class="combate-stat-label">Inteligencia</span><span class="combate-stat-valor">${p.inteligencia}</span></div>
+                        <div class="combate-stat"><span class="combate-stat-icono">✨</span><span class="combate-stat-label">Exp</span><span class="combate-stat-valor">${p.exp}</span></div>
                     </div>
                     <div class="combate-card-footer">
                         <span>🏷️ Raza ID: ${p.id_raza}</span>
@@ -664,7 +569,6 @@
                 </div>`;
             select.innerHTML += `<option value="${p.id_pj}">${p.nombre} (ID: ${p.id_pj})</option>`;
         });
-
         if (currentVal) select.value = currentVal;
         else if (personajeCombateId) select.value = personajeCombateId;
     }
@@ -743,6 +647,8 @@
         if (personajeInvId) {
             c.style.display = 'block';
             document.getElementById('lista_inventario').innerHTML = '<p>Cargando inventario...</p>';
+            // Resetear filtro al cambiar de personaje
+            document.getElementById('filtro-tipo-inventario').value = 'TODOS';
             socket.emit('ver_inventario', { id_personaje: personajeInvId });
         } else {
             c.style.display = 'none';
@@ -750,14 +656,16 @@
     }
 
     socket.on('ver_inventario', (items) => {
-        const grid    = document.getElementById('lista_inventario');
+        // Guardar caché completo, actualizar resumen y aplicar filtro actual
+        cacheItemsInventario = items || [];
+        renderResumenInventario(cacheItemsInventario);
+        filtrarYRenderizarInventario();
+    });
+
+    /* Resumen de stats del inventario (usa siempre el caché completo) */
+    function renderResumenInventario(items) {
         const resumen = document.getElementById('inv-resumen');
-        grid.innerHTML = '';
-        if (!items || items.length === 0) {
-            grid.innerHTML = '<p style="color:#888;">Este personaje no tiene objetos en el inventario.</p>';
-            resumen.innerHTML = '';
-            return;
-        }
+        if (!items || items.length === 0) { resumen.innerHTML = ''; return; }
         const total    = items.reduce((s, i) => s + i.cantidad, 0);
         const equipados = items.filter(i => i.equipado).length;
         const tipos    = [...new Set(items.map(i => i.tipo))].length;
@@ -766,9 +674,24 @@
             <div class="inv-stat-card"><div class="num">${total}</div><div class="lbl">Objetos totales</div></div>
             <div class="inv-stat-card"><div class="num">${equipados}</div><div class="lbl">Equipados</div></div>
             <div class="inv-stat-card"><div class="num">${tipos}</div><div class="lbl">Categorías</div></div>`;
+    }
+
+    /* Filtra el caché y pinta las cards del inventario */
+    function filtrarYRenderizarInventario() {
+        const grid   = document.getElementById('lista_inventario');
+        const filtro = document.getElementById('filtro-tipo-inventario').value;
+        grid.innerHTML = '';
+
+        const items = cacheItemsInventario.filter(it => filtro === 'TODOS' || it.tipo === filtro);
+
+        if (items.length === 0) {
+            grid.innerHTML = cacheItemsInventario.length === 0
+                ? '<p style="color:#888;">Este personaje no tiene objetos en el inventario.</p>'
+                : '<p style="color:#888; padding:10px;">No hay objetos de esta categoría en el inventario.</p>';
+            return;
+        }
 
         const iconoTipo = { 'Arma':'⚔️','Armadura':'🛡️','Consumible':'🧪','Accesorio':'💍','Escudo':'🪃' };
-
         items.forEach(it => {
             const stats = [
                 { lbl: '❤️ Vida',         val: it.mod_vida },
@@ -805,7 +728,7 @@
                     </div>
                 </div>`;
         });
-    });
+    }
 
     /* ── Equipar / Desequipar ── */
     function equiparDesequiparItem(idItem, equipado) {
@@ -818,7 +741,9 @@
     socket.on('equipar_desequipar_item', (exito) => {
         if (exito) {
             log('✅ Item actualizado correctamente.');
+            // Refresca inventario Y fichas de personajes para reflejar stats al día
             socket.emit('ver_inventario', { id_personaje: personajeInvId });
+            socket.emit('personajes');
         } else {
             log('❌ No se pudo actualizar el item.');
         }
@@ -892,8 +817,8 @@
     /* ── Modal Compra ── */
     function abrirModalCompra(idItem, nombreItem, precioItem) {
         itemTiendaPendiente = { id: idItem, nombre: nombreItem, precio: precioItem };
-        const pj         = listaPersonajesCache.find(p => p.id_pj == personajeTiendaId);
-        const oroActual  = pj ? pj.oro : 0;
+        const pj           = listaPersonajesCache.find(p => p.id_pj == personajeTiendaId);
+        const oroActual    = pj ? pj.oro : 0;
         const puedeComprar = oroActual >= precioItem;
         const balanceHTML  = puedeComprar
             ? `Oro restante tras compra: ${oroActual - precioItem}g`
@@ -937,19 +862,14 @@
         }
     });
 
-    /* ══════════════════════════════════════════════════════
-       COMBATE
-    ══════════════════════════════════════════════════════ */
+    /* ── Combate ── */
     function seleccionarPersonajeCombate() {
         personajeCombateId = document.getElementById('select-personaje-combate').value;
         const container = document.getElementById('combate_container');
         const arena     = document.getElementById('batalla-arena');
-
-        // Resetear estado de batalla al cambiar de personaje
         enemigoSeleccionado = null;
         document.getElementById('select-enemigo').value = '';
         arena.style.display = 'none';
-
         if (personajeCombateId) {
             container.style.display = 'block';
             log('🎯 Personaje asignado a la arena. Cargando enemigos...');
@@ -959,42 +879,29 @@
         }
     }
 
-    /* Recibe la lista de enemigos desde el servidor */
     socket.on('elegir_enemigo', (enemigos) => {
         listaEnemigosCache = enemigos || [];
         const select = document.getElementById('select-enemigo');
         select.innerHTML = '<option value="">-- Elige un enemigo --</option>';
         listaEnemigosCache.forEach(e => {
-            // Se espera que cada enemigo tenga al menos: id, nombre, nivel
             select.innerHTML += `<option value="${e.id}">${e.nombre} — Nv. ${e.nivel}</option>`;
         });
         log(`👹 ${listaEnemigosCache.length} enemigo(s) disponibles. ¡Elige tu rival!`);
     });
 
-    /* Cuando el jugador elige un enemigo del select */
     function seleccionarEnemigo() {
         const idEnemigo = document.getElementById('select-enemigo').value;
         const arena     = document.getElementById('batalla-arena');
-
-        if (!idEnemigo) {
-            arena.style.display = 'none';
-            enemigoSeleccionado  = null;
-            return;
-        }
-
+        if (!idEnemigo) { arena.style.display = 'none'; enemigoSeleccionado = null; return; }
         enemigoSeleccionado = listaEnemigosCache.find(e => String(e.id) === String(idEnemigo));
         const pj = listaPersonajesCache.find(p => p.id_pj == personajeCombateId);
-
         if (!enemigoSeleccionado || !pj) return;
-
         renderFichaHeroe(pj);
         renderFichaEnemigo(enemigoSeleccionado);
-
         arena.style.display = 'block';
         log(`⚔️ ¡${pj.nombre} vs ${enemigoSeleccionado.nombre}! ¡Que comience la batalla!`);
     }
 
-    /* Renderiza la ficha del héroe (izquierda) */
     function renderFichaHeroe(pj) {
         document.getElementById('ficha-heroe').innerHTML = `
             <div class="ficha-encabezado">
@@ -1006,62 +913,29 @@
             </div>
             <div class="ficha-barra-grupo">
                 <div class="ficha-barra-label"><span>❤️ Vida</span><span>${pj.vida_max}</span></div>
-                <div class="ficha-barra-bg">
-                    <div class="ficha-barra-fill vida" style="width:100%"></div>
-                </div>
+                <div class="ficha-barra-bg"><div class="ficha-barra-fill vida" style="width:100%"></div></div>
             </div>
             <div class="ficha-barra-grupo">
                 <div class="ficha-barra-label"><span>💧 Maná</span><span>${pj.mana_max}</span></div>
-                <div class="ficha-barra-bg">
-                    <div class="ficha-barra-fill mana" style="width:100%"></div>
-                </div>
+                <div class="ficha-barra-bg"><div class="ficha-barra-fill mana" style="width:100%"></div></div>
             </div>
             <div class="ficha-stats">
-                <div class="ficha-stat">
-                    <span class="ficha-stat-icono">💪</span>
-                    <span class="ficha-stat-label">Fuerza</span>
-                    <span class="ficha-stat-valor">${pj.fuerza}</span>
-                </div>
-                <div class="ficha-stat">
-                    <span class="ficha-stat-icono">🦶</span>
-                    <span class="ficha-stat-label">Agilidad</span>
-                    <span class="ficha-stat-valor">${pj.agilidad}</span>
-                </div>
-                <div class="ficha-stat">
-                    <span class="ficha-stat-icono">🧠</span>
-                    <span class="ficha-stat-label">Inteligencia</span>
-                    <span class="ficha-stat-valor">${pj.inteligencia}</span>
-                </div>
-                <div class="ficha-stat">
-                    <span class="ficha-stat-icono">✨</span>
-                    <span class="ficha-stat-label">Exp</span>
-                    <span class="ficha-stat-valor">${pj.exp}</span>
-                </div>
-                <div class="ficha-stat">
-                    <span class="ficha-stat-icono">🏷️</span>
-                    <span class="ficha-stat-label">Raza </span>
-                    <span class="ficha-stat-valor">${pj.nombre_raza}</span>
-                </div>
-                <div class="ficha-stat">
-                    <span class="ficha-stat-icono">🗡️</span>
-                    <span class="ficha-stat-label">Clase </span>
-                    <span class="ficha-stat-valor">${pj.nombre_clase}</span>
-                </div>
+                <div class="ficha-stat"><span class="ficha-stat-icono">💪</span><span class="ficha-stat-label">Fuerza</span><span class="ficha-stat-valor">${pj.fuerza}</span></div>
+                <div class="ficha-stat"><span class="ficha-stat-icono">🦶</span><span class="ficha-stat-label">Agilidad</span><span class="ficha-stat-valor">${pj.agilidad}</span></div>
+                <div class="ficha-stat"><span class="ficha-stat-icono">🧠</span><span class="ficha-stat-label">Inteligencia</span><span class="ficha-stat-valor">${pj.inteligencia}</span></div>
+                <div class="ficha-stat"><span class="ficha-stat-icono">✨</span><span class="ficha-stat-label">Exp</span><span class="ficha-stat-valor">${pj.exp}</span></div>
+                <div class="ficha-stat"><span class="ficha-stat-icono">🏷️</span><span class="ficha-stat-label">Raza</span><span class="ficha-stat-valor">${pj.nombre_raza}</span></div>
+                <div class="ficha-stat"><span class="ficha-stat-icono">🗡️</span><span class="ficha-stat-label">Clase</span><span class="ficha-stat-valor">${pj.nombre_clase}</span></div>
             </div>`;
     }
 
-    /* Renderiza la ficha del enemigo (derecha).
-       Adapta los campos según los que devuelva tu modelo Enemigos. */
     function renderFichaEnemigo(e) {
-        // Campos adaptados al nuevo modelo del rival
-        const vida         = e.vida_max    ?? '—';
-        const dano         = e.dano_base   ?? '—';
-        const exp          = e.exp_recom   ?? '—';
-        const oro          = e.oro_recom   ?? '—';
-        const descripcion  = e.descripcion ?? 'Sin descripción.';
-
-        // Barra de vida: si pasas 'e.vida' la calcula, si no, asume que está al máximo
-        const vidaActual   = e.vida ?? e.vida_max ?? 0;
+        const vida        = e.vida_max    ?? '—';
+        const dano        = e.dano_base   ?? '—';
+        const exp         = e.exp_recom   ?? '—';
+        const oro         = e.oro_recom   ?? '—';
+        const descripcion = e.descripcion ?? 'Sin descripción.';
+        const vidaActual  = e.vida ?? e.vida_max ?? 0;
         const pctVida = (typeof e.vida_max === 'number' && e.vida_max > 0)
             ? Math.min((vidaActual / e.vida_max) * 100, 100) : 100;
 
@@ -1075,34 +949,15 @@
             </div>
             <div class="ficha-barra-grupo">
                 <div class="ficha-barra-label"><span>❤️ Vida</span><span>${vidaActual} / ${vida}</span></div>
-                <div class="ficha-barra-bg">
-                    <div class="ficha-barra-fill vida" style="width:${pctVida}%"></div>
-                </div>
+                <div class="ficha-barra-bg"><div class="ficha-barra-fill vida" style="width:${pctVida}%"></div></div>
             </div>
-
-        <!-- Bloque de descripción -->
-        <div class="ficha-descripcion" style="margin: 10px 0; font-style: italic; font-size: 0.9em; color: #666;">
-            ${descripcion}
-        </div>
-
-        <div class="ficha-stats">
-            <div class="ficha-stat">
-                <span class="ficha-stat-icono">🗡️</span>
-                <span class="ficha-stat-label">Daño base</span>
-                <span class="ficha-stat-valor">${dano}</span>
-            </div>
-            <div class="ficha-stat">
-                <span class="ficha-stat-icono">✨</span>
-                <span class="ficha-stat-label">Exp drop</span>
-                <span class="ficha-stat-valor">${exp}</span>
-            </div>
-            <div class="ficha-stat">
-                <span class="ficha-stat-icono">💰</span>
-                <span class="ficha-stat-label">Oro drop</span>
-                <span class="ficha-stat-valor">${oro}</span>
-            </div>
-        </div>`;
-}
+            <div class="ficha-descripcion" style="margin:10px 0;font-style:italic;font-size:0.9em;color:#666;">${descripcion}</div>
+            <div class="ficha-stats">
+                <div class="ficha-stat"><span class="ficha-stat-icono">🗡️</span><span class="ficha-stat-label">Daño base</span><span class="ficha-stat-valor">${dano}</span></div>
+                <div class="ficha-stat"><span class="ficha-stat-icono">✨</span><span class="ficha-stat-label">Exp drop</span><span class="ficha-stat-valor">${exp}</span></div>
+                <div class="ficha-stat"><span class="ficha-stat-icono">💰</span><span class="ficha-stat-label">Oro drop</span><span class="ficha-stat-valor">${oro}</span></div>
+            </div>`;
+    }
 
     /* ── Modal Requisitos Habilidades ── */
     function abrirModalRequisitos(idHabilidad, nombreHabilidad) {
