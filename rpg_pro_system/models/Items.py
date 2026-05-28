@@ -81,3 +81,17 @@ class Items:
             except Exception as e:
                 print(f"❌ Error al consultar los items: {e}")
         return items_data
+    @classmethod
+    def obtener_bonos_consumible(cls, id_item):
+        with conectar_bd() as conexion:
+            try:
+                with conexion.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT mod_vida, mod_mana FROM ITEMS WHERE ID=%s", (id_item,)
+                    )
+                    fila = cursor.fetchone()
+                    # Si se ha encontrado el id devuvelve su mod_vida y mod_mana y sino 0,0
+                    return fila if fila else (0, 0)
+            except Exception as e:
+                print(f'Error obteniendo los bonos: {e}')
+                return (0,0)

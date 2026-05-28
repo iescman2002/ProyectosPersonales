@@ -138,7 +138,6 @@
         .inv-stat-card .num { font-size: 1.6em; font-weight: bold; color: var(--primary-color); }
         .inv-stat-card .lbl { font-size: 0.75em; color: #666; margin-top: 2px; }
 
-        /* ── Cabecera de sección con filtro (compartida inventario/tienda) ── */
         .seccion-cabecera {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 10px; gap: 20px; flex-wrap: wrap;
@@ -262,7 +261,7 @@
         .ficha-barra-label span:last-child { color: #ccc; font-weight: bold; }
         .ficha-barra-bg { background: #2a2a2a; border-radius: 6px; height: 10px; overflow: hidden; }
         .ficha-barra-fill { height: 10px; border-radius: 6px; transition: width 0.6s ease; }
-        .ficha-barra-fill.vida  { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+        .ficha-barra-fill.vida  { background: #e74c3c; }
         .ficha-barra-fill.mana  { background: linear-gradient(90deg, #2980b9, #3498db); }
         .ficha-stats {
             display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px;
@@ -289,11 +288,78 @@
             width: 2px; flex-grow: 1; max-height: 80px;
             background: linear-gradient(to bottom, transparent, #e74c3c, transparent);
         }
+
+        /* ── Acciones de combate ── */
         .batalla-acciones {
-            margin-top: 20px; padding: 16px 20px;
-            background: #141414; border: 1px dashed #2a2a2a; border-radius: 8px;
-            text-align: center; color: #444; font-size: 0.85em; font-style: italic;
+            margin-top: 20px; padding: 18px 20px;
+            background: #141414; border: 1px solid #2a2a2a; border-radius: 8px;
         }
+        .acciones-titulo {
+            font-size: 0.7em; text-transform: uppercase; letter-spacing: 1.5px;
+            color: #444; margin-bottom: 14px; text-align: center;
+        }
+        .acciones-botones {
+            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+        }
+        .btn-accion {
+            border: none; padding: 10px 20px; cursor: pointer; border-radius: 6px;
+            font-size: 0.9em; font-weight: bold; transition: 0.2s; min-width: 120px;
+        }
+        .btn-accion:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-accion:active { transform: scale(0.97); }
+        .btn-accion.atacar      { background: #e74c3c; color: white; }
+        .btn-accion.inventario  { background: #e67e22; color: white; }
+        .btn-accion.habilidades { background: #3498db; color: white; }
+        .btn-accion.huir        { background: #444;    color: #bbb; }
+        .btn-accion.activo      { outline: 2px solid white; outline-offset: 2px; }
+
+        /* Panel de consumibles en combate */
+        #panel-inventario-combate {
+            margin-top: 16px;
+            animation: fadeInUp 0.2s ease;
+        }
+        .panel-consumibles-header {
+            font-size: 0.72em; text-transform: uppercase; letter-spacing: 1px;
+            color: #888; margin: 0 0 12px; padding-bottom: 8px;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .consumibles-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 10px;
+        }
+        .consumible-card {
+            background: #1e1e1e; border: 1px solid #3a3a3a;
+            border-left: 4px solid #e67e22; border-radius: 6px; padding: 12px;
+            transition: transform 0.15s;
+        }
+        .consumible-card:hover { transform: translateY(-2px); }
+        .consumible-nombre {
+            font-weight: bold; font-size: 0.9em; color: #f0f0f0;
+            margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
+        }
+        .consumible-cantidad {
+            font-size: 0.72em; background: #3a2a0a; color: #f39c12;
+            padding: 2px 7px; border-radius: 10px;
+        }
+        .consumible-desc {
+            font-size: 0.78em; color: #666; font-style: italic; margin-bottom: 6px;
+        }
+        .consumible-stats {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;
+        }
+        .consumible-stat {
+            font-size: 0.78em; color: #2ecc71;
+            background: #1a3a1a; border-radius: 4px; padding: 2px 7px;
+        }
+        .consumible-footer {
+            display: flex; flex-direction: column; gap: 8px;
+            border-top: 1px solid #2a2a2a; padding-top: 10px; margin-top: 4px;
+        }
+        .consumible-dmg-info {
+            font-size: 0.78em; color: #666;
+        }
+        .consumible-dmg-info strong { color: #e74c3c; }
     </style>
 </head>
 <body>
@@ -351,7 +417,6 @@
             <option value="">-- Elige un personaje --</option>
         </select>
         <div id="inventario_container" style="display:none; margin-top:20px;">
-            <!-- Cabecera con título + filtro de tipo -->
             <div class="seccion-cabecera">
                 <h3>2. Objetos en el inventario</h3>
                 <select id="filtro-tipo-inventario" onchange="filtrarYRenderizarInventario()" style="margin:0; width:250px;">
@@ -446,8 +511,19 @@
                     </div>
                     <div class="batalla-ficha ficha-enemigo" id="ficha-enemigo"></div>
                 </div>
-                <div class="batalla-acciones">
-                    🎮 Aquí irán los botones de acción: Atacar, Inventario, Habilidades, Huir…
+
+                <!-- ── ACCIONES DE COMBATE ── -->
+                <div class="batalla-acciones" id="batalla-acciones-panel">
+                    <div class="acciones-titulo">🎮 Elige tu acción — Turno <span id="turno-display">1</span></div>
+                    <div class="acciones-botones">
+                        <button class="btn-accion atacar"      onclick="accionCombate('atacar')">⚔️ Atacar</button>
+                        <button class="btn-accion inventario"  id="btn-accion-inventario" onclick="accionCombate('inventario')">🎒 Inventario</button>
+                        <button class="btn-accion habilidades" onclick="accionCombate('habilidades')">✨ Habilidades</button>
+                        <button class="btn-accion huir"        onclick="accionCombate('huir')">🏃 Huir</button>
+                    </div>
+
+                    <!-- Panel desplegable de consumibles -->
+                    <div id="panel-inventario-combate" style="display:none;"></div>
                 </div>
             </div>
         </div>
@@ -481,9 +557,12 @@
     let itemTiendaPendiente  = null;
     let listaPersonajesCache = [];
     let cacheItemsTienda     = [];
-    let cacheItemsInventario = [];   // ← caché para filtrado de inventario
+    let cacheItemsInventario = [];
     let listaEnemigosCache   = [];
     let enemigoSeleccionado  = null;
+    let turnoCombate           = 1;
+    let panelInventarioAbierto = false;
+    let contextoInventario     = 'normal';
 
     const rarezaPesos = { 'Común': 1, 'Raro': 2, 'Épico': 3, 'Legendario': 4 };
 
@@ -512,7 +591,8 @@
             }
         }
 
-        if (personajeCombateId && enemigoSeleccionado) {
+        // ── REFRESCAR HÉROE EN COMBATE: Se ejecuta siempre que el servidor mande datos frescos ──
+        if (personajeCombateId) {
             const pj = personajes.find(p => p.id_pj == personajeCombateId);
             if (pj) renderFichaHeroe(pj);
         }
@@ -530,7 +610,7 @@
                 <div class="personaje-card">
                     <strong>ID: ${p.id_pj} — ${p.nombre}</strong>
                     <p>Nivel: ${p.nivel} | Oro: ${p.oro}g</p>
-                    <p>Vida: ${p.vida_max} | Exp: ${p.exp}</p>
+                    <p>Vida: ${p.vida_actual ?? p.vida_max} / ${p.vida_max} | Exp: ${p.exp}</p>
                     <p><small>Raza ID: ${p.id_raza} | Clase ID: ${p.id_clase}</small></p>
                 </div>`;
             select.innerHTML += `<option value="${p.id_pj}">${p.nombre} (ID: ${p.id_pj})</option>`;
@@ -547,6 +627,8 @@
         grid.innerHTML   = '';
         select.innerHTML = '<option value="">-- Elige un personaje --</option>';
         personajes.forEach(p => {
+            const vidaActual = p.vida_actual ?? p.vida_max;
+            const manaActual = p.mana_actual ?? p.mana_max;
             grid.innerHTML += `
                 <div class="combate-card">
                     <div class="combate-card-header">
@@ -554,8 +636,8 @@
                         <span class="combate-card-nivel">Nv. ${p.nivel}</span>
                     </div>
                     <div class="combate-stats-grid">
-                        <div class="combate-stat"><span class="combate-stat-icono">❤️</span><span class="combate-stat-label">Vida</span><span class="combate-stat-valor">${p.vida_max}</span></div>
-                        <div class="combate-stat"><span class="combate-stat-icono">💧</span><span class="combate-stat-label">Maná</span><span class="combate-stat-valor">${p.mana_max}</span></div>
+                        <div class="combate-stat"><span class="combate-stat-icono">❤️</span><span class="combate-stat-label">Vida</span><span class="combate-stat-valor">${vidaActual} / ${p.vida_max}</span></div>
+                        <div class="combate-stat"><span class="combate-stat-icono">💧</span><span class="combate-stat-label">Maná</span><span class="combate-stat-valor">${manaActual} / ${p.mana_max}</span></div>
                         <div class="combate-stat"><span class="combate-stat-icono">💪</span><span class="combate-stat-label">Fuerza</span><span class="combate-stat-valor">${p.fuerza}</span></div>
                         <div class="combate-stat"><span class="combate-stat-icono">🦶</span><span class="combate-stat-label">Agilidad</span><span class="combate-stat-valor">${p.agilidad}</span></div>
                         <div class="combate-stat"><span class="combate-stat-icono">🧠</span><span class="combate-stat-label">Inteligencia</span><span class="combate-stat-valor">${p.inteligencia}</span></div>
@@ -647,8 +729,8 @@
         if (personajeInvId) {
             c.style.display = 'block';
             document.getElementById('lista_inventario').innerHTML = '<p>Cargando inventario...</p>';
-            // Resetear filtro al cambiar de personaje
             document.getElementById('filtro-tipo-inventario').value = 'TODOS';
+            contextoInventario = 'normal';
             socket.emit('ver_inventario', { id_personaje: personajeInvId });
         } else {
             c.style.display = 'none';
@@ -656,19 +738,21 @@
     }
 
     socket.on('ver_inventario', (items) => {
-        // Guardar caché completo, actualizar resumen y aplicar filtro actual
-        cacheItemsInventario = items || [];
-        renderResumenInventario(cacheItemsInventario);
-        filtrarYRenderizarInventario();
+        if (contextoInventario === 'combate') {
+            renderConsumiblesCombate(items);
+        } else {
+            cacheItemsInventario = items || [];
+            renderResumenInventario(cacheItemsInventario);
+            filtrarYRenderizarInventario();
+        }
     });
 
-    /* Resumen de stats del inventario (usa siempre el caché completo) */
     function renderResumenInventario(items) {
         const resumen = document.getElementById('inv-resumen');
         if (!items || items.length === 0) { resumen.innerHTML = ''; return; }
-        const total    = items.reduce((s, i) => s + i.cantidad, 0);
+        const total     = items.reduce((s, i) => s + i.cantidad, 0);
         const equipados = items.filter(i => i.equipado).length;
-        const tipos    = [...new Set(items.map(i => i.tipo))].length;
+        const tipos     = [...new Set(items.map(i => i.tipo))].length;
         resumen.innerHTML = `
             <div class="inv-stat-card"><div class="num">${items.length}</div><div class="lbl">Tipos distintos</div></div>
             <div class="inv-stat-card"><div class="num">${total}</div><div class="lbl">Objetos totales</div></div>
@@ -676,21 +760,17 @@
             <div class="inv-stat-card"><div class="num">${tipos}</div><div class="lbl">Categorías</div></div>`;
     }
 
-    /* Filtra el caché y pinta las cards del inventario */
-        function filtrarYRenderizarInventario() {
+    function filtrarYRenderizarInventario() {
         const grid   = document.getElementById('lista_inventario');
         const filtro = document.getElementById('filtro-tipo-inventario').value;
         grid.innerHTML = '';
-
         const items = cacheItemsInventario.filter(it => filtro === 'TODOS' || it.tipo === filtro);
-
         if (items.length === 0) {
             grid.innerHTML = cacheItemsInventario.length === 0
                 ? '<p style="color:#888;">Este personaje no tiene objetos en el inventario.</p>'
                 : '<p style="color:#888; padding:10px;">No hay objetos de esta categoría en el inventario.</p>';
             return;
         }
-
         const iconoTipo = { 'Arma':'⚔️','Armadura':'🛡️','Consumible':'🧪','Accesorio':'💍','Escudo':'🪃' };
         items.forEach(it => {
             const stats = [
@@ -701,13 +781,11 @@
                 { lbl: '🧠 Inteligencia', val: it.mod_inteligencia },
                 { lbl: '🗡️ Daño bonus',  val: it.dano_bonus },
             ].filter(s => s.val !== 0);
-
             const statsHTML = stats.length > 0
                 ? `<div class="item-stats">${stats.map(s =>
                     `<div class="stat positivo"><span>${s.lbl}</span><strong>+${s.val}</strong></div>`
                   ).join('')}</div>`
                 : `<div style="font-size:0.78em;color:#555;margin-bottom:10px;">Sin modificadores</div>`;
-
             grid.innerHTML += `
                 <div class="item-card rareza-${it.rareza}">
                     <div class="item-nombre">
@@ -743,7 +821,6 @@
     socket.on('equipar_desequipar_item', (exito) => {
         if (exito) {
             log('✅ Item actualizado correctamente.');
-            // Refresca inventario Y fichas de personajes para reflejar stats al día
             socket.emit('ver_inventario', { id_personaje: personajeInvId });
             socket.emit('personajes');
         } else {
@@ -859,19 +936,28 @@
         if (exito) {
             log('🛒 ¡Compra realizada con éxito! Actualizando oro...');
             socket.emit('personajes');
+            // Fix: si el inventario está abierto, recargarlo para que aparezca el nuevo item
+            const invContainer = document.getElementById('inventario_container');
+            if (personajeInvId && invContainer && invContainer.style.display !== 'none') {
+                contextoInventario = 'normal';
+                socket.emit('ver_inventario', { id_personaje: personajeInvId });
+            }
         } else {
             log('❌ No se ha podido completar la transacción.');
         }
     });
 
-    /* ── Combate ── */
+    /* ── Combate: selección ── */
     function seleccionarPersonajeCombate() {
         personajeCombateId = document.getElementById('select-personaje-combate').value;
-        const container = document.getElementById('combate_container');
-        const arena     = document.getElementById('batalla-arena');
-        enemigoSeleccionado = null;
+        const container    = document.getElementById('combate_container');
+        const arena        = document.getElementById('batalla-arena');
+        enemigoSeleccionado    = null;
+        panelInventarioAbierto = false;
+        turnoCombate           = 1;
         document.getElementById('select-enemigo').value = '';
         arena.style.display = 'none';
+        cerrarPanelInventarioCombate();
         if (personajeCombateId) {
             container.style.display = 'block';
             log('🎯 Personaje asignado a la arena. Cargando enemigos...');
@@ -894,6 +980,9 @@
     function seleccionarEnemigo() {
         const idEnemigo = document.getElementById('select-enemigo').value;
         const arena     = document.getElementById('batalla-arena');
+        cerrarPanelInventarioCombate();
+        turnoCombate = 1;
+        actualizarDisplayTurno();
         if (!idEnemigo) { arena.style.display = 'none'; enemigoSeleccionado = null; return; }
         enemigoSeleccionado = listaEnemigosCache.find(e => String(e.id) === String(idEnemigo));
         const pj = listaPersonajesCache.find(p => p.id_pj == personajeCombateId);
@@ -904,7 +993,167 @@
         log(`⚔️ ¡${pj.nombre} vs ${enemigoSeleccionado.nombre}! ¡Que comience la batalla!`);
     }
 
+    /* ── Combate: acciones ── */
+    function accionCombate(tipo) {
+        const panel   = document.getElementById('panel-inventario-combate');
+        const btnInv  = document.getElementById('btn-accion-inventario');
+
+        if (tipo === 'inventario') {
+            if (panelInventarioAbierto) {
+                cerrarPanelInventarioCombate();
+                return;
+            }
+            panelInventarioAbierto = true;
+            btnInv.classList.add('activo');
+            panel.style.display = 'block';
+            panel.innerHTML = '<p style="color:#666;font-size:0.85em;text-align:center;padding:12px;">Cargando consumibles...</p>';
+            contextoInventario = 'combate';
+            socket.emit('ver_inventario', { id_personaje: personajeCombateId });
+
+        } else if (tipo === 'atacar') {
+            cerrarPanelInventarioCombate();
+            log('⚔️ Acción: Atacar — (pendiente de implementar)');
+
+        } else if (tipo === 'habilidades') {
+            cerrarPanelInventarioCombate();
+            log('✨ Acción: Habilidades — (pendiente de implementar)');
+
+        } else if (tipo === 'huir') {
+            cerrarPanelInventarioCombate();
+            enemigoSeleccionado = null;
+            turnoCombate = 1;
+            actualizarDisplayTurno();
+            document.getElementById('batalla-arena').style.display = 'none';
+            document.getElementById('select-enemigo').value = '';
+            log('🏃 Has huido del combate.');
+        }
+    }
+
+    function cerrarPanelInventarioCombate() {
+        panelInventarioAbierto = false;
+        contextoInventario     = 'normal';
+        const panel  = document.getElementById('panel-inventario-combate');
+        const btnInv = document.getElementById('btn-accion-inventario');
+        if (panel)  { panel.style.display = 'none'; panel.innerHTML = ''; }
+        if (btnInv) { btnInv.classList.remove('activo'); }
+    }
+
+    function actualizarDisplayTurno() {
+        const el = document.getElementById('turno-display');
+        if (el) el.textContent = turnoCombate;
+    }
+
+    /* ── Combate: render de consumibles en el panel ── */
+    function renderConsumiblesCombate(items) {
+        const panel       = document.getElementById('panel-inventario-combate');
+        const consumibles = (items || []).filter(it => it.tipo === 'Consumible');
+        const dmgEnemigo  = enemigoSeleccionado ? (enemigoSeleccionado.dano_base ?? 0) : 0;
+
+        if (consumibles.length === 0) {
+            panel.innerHTML = `
+                <div class="panel-consumibles-header">
+                    <span>🎒 consumibles — turno ${turnoCombate}</span>
+                    <span style="color:#e74c3c;">Sin consumibles</span>
+                </div>
+                <p style="color:#666;font-size:0.85em;text-align:center;padding:16px 0;">
+                    No tienes consumibles en el inventario. Cómpralos en la 🛒 Tienda.
+                </p>`;
+            return;
+        }
+
+        const cardsHTML = consumibles.map(it => {
+            const statsArr = [
+                { lbl: '❤️ Vida',   val: it.mod_vida },
+                { lbl: '💧 Maná',   val: it.mod_mana },
+                { lbl: '💪 Fuerza', val: it.mod_fuerza },
+                { lbl: '🦶 Agi',    val: it.mod_agilidad },
+                { lbl: '🧠 Int',    val: it.mod_inteligencia },
+            ].filter(s => s.val !== 0);
+
+            const statsHTML = statsArr.length > 0
+                ? statsArr.map(s => `<span class="consumible-stat">+${s.val} ${s.lbl}</span>`).join('')
+                : '<span style="color:#555;font-size:0.78em;">Sin modificadores de stats</span>';
+
+            return `
+                <div class="consumible-card">
+                    <div class="consumible-nombre">
+                        🧪 ${it.nombre}
+                        <span class="consumible-cantidad">×${it.cantidad}</span>
+                    </div>
+                    <div class="consumible-desc">${it.descripcion || 'Sin descripción.'}</div>
+                    <div class="consumible-stats">${statsHTML}</div>
+                    <div class="consumible-footer">
+                        <button class="btn btn-desbloquear" style="padding:5px 14px;font-size:0.82em;width:100%;margin-bottom:8px;"
+                            onclick="usarConsumible(${it.id_item}, '${it.nombre.replace(/'/g,"\\'")}', ${dmgEnemigo})">
+                            ✅ Usar consumible
+                        </button>
+                        <div style="
+                            width:100%;
+                            background:#2a1a1a;
+                            border:1px solid #5a2a2a;
+                            border-left: 4px solid #e74c3c;
+                            border-radius:5px;
+                            padding:7px 10px;
+                            font-size:0.78em;
+                            color:#ccc;
+                            display:flex;
+                            align-items:center;
+                            gap:8px;
+                        ">
+                            <span style="font-size:1.2em;">⚠️</span>
+                            <span>Al confirmar este turno, el enemigo te atacará por <strong style="color:#e74c3c;font-size:1.05em;">${dmgEnemigo} dmg</strong></span>
+                        </div>
+                    </div>
+                </div>`;
+        }).join('');
+
+        panel.innerHTML = `
+            <div class="panel-consumibles-header">
+                <span>🎒 consumibles disponibles — turno ${turnoCombate}</span>
+                <span>${consumibles.length} item${consumibles.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="consumibles-grid">${cardsHTML}</div>`;
+    }
+
+    /* ── FIX BUG 1: Añadido id_enemigo al emit ── */
+    function usarConsumible(idItem, nombreItem, dmgEnemigo) {
+        if (!personajeCombateId) return;
+        log(`🧪 Usando ${nombreItem}… El enemigo golpea por ${dmgEnemigo} dmg. (Turno ${turnoCombate})`);
+        socket.emit('consumir_consumible', {
+            id_personaje: personajeCombateId,
+            id_item:      idItem,
+            turno:        turnoCombate,
+            dmg_enemigo:  dmgEnemigo,
+            id_enemigo:   enemigoSeleccionado ? enemigoSeleccionado.id : null  // ← FIX BUG 1
+        });
+    }
+
+    socket.on('consumir_consumible', (resultado) => {
+    if (resultado) {
+            turnoCombate++;
+            actualizarDisplayTurno();
+            cerrarPanelInventarioCombate();
+            log(`✅ Consumible aplicado. Turno ${turnoCombate - 1} registrado. Refrescando estado...`);
+
+            // Esto le pide al servidor los nuevos personajes (con la vida ya restada por el enemigo)
+            socket.emit('personajes');
+        } else {
+            log('❌ No se pudo usar el consumible (sin stock o error en BD).');
+        }
+    });
+
+    /* ── FIX BUG 5: Fichas de batalla con vida_actual / mana_actual ── */
     function renderFichaHeroe(pj) {
+        const vidaActual = pj.vida_actual ?? pj.vida_max;
+        const manaActual = pj.mana_actual ?? pj.mana_max;
+        const pctVida    = pj.vida_max > 0 ? Math.min((vidaActual / pj.vida_max) * 100, 100) : 100;
+        const pctMana    = pj.mana_max > 0 ? Math.min((manaActual / pj.mana_max) * 100, 100) : 100;
+
+        // Color dinámico de la barra de vida según el porcentaje
+        const colorVida = pctVida > 50 ? 'linear-gradient(90deg, #27ae60, #2ecc71)'
+                        : pctVida > 25 ? 'linear-gradient(90deg, #e67e22, #f39c12)'
+                                       : 'linear-gradient(90deg, #c0392b, #e74c3c)';
+
         document.getElementById('ficha-heroe').innerHTML = `
             <div class="ficha-encabezado">
                 <div>
@@ -914,12 +1163,22 @@
                 <span class="ficha-nivel-badge heroe">Nv. ${pj.nivel}</span>
             </div>
             <div class="ficha-barra-grupo">
-                <div class="ficha-barra-label"><span>❤️ Vida</span><span>${pj.vida_max}</span></div>
-                <div class="ficha-barra-bg"><div class="ficha-barra-fill vida" style="width:100%"></div></div>
+                <div class="ficha-barra-label">
+                    <span>❤️ Vida</span>
+                    <span>${vidaActual} / ${pj.vida_max}</span>
+                </div>
+                <div class="ficha-barra-bg">
+                    <div class="ficha-barra-fill vida" style="width:${pctVida}%; background:${colorVida};"></div>
+                </div>
             </div>
             <div class="ficha-barra-grupo">
-                <div class="ficha-barra-label"><span>💧 Maná</span><span>${pj.mana_max}</span></div>
-                <div class="ficha-barra-bg"><div class="ficha-barra-fill mana" style="width:100%"></div></div>
+                <div class="ficha-barra-label">
+                    <span>💧 Maná</span>
+                    <span>${manaActual} / ${pj.mana_max}</span>
+                </div>
+                <div class="ficha-barra-bg">
+                    <div class="ficha-barra-fill mana" style="width:${pctMana}%"></div>
+                </div>
             </div>
             <div class="ficha-stats">
                 <div class="ficha-stat"><span class="ficha-stat-icono">💪</span><span class="ficha-stat-label">Fuerza</span><span class="ficha-stat-valor">${pj.fuerza}</span></div>
@@ -1019,9 +1278,11 @@
 
     /* ── Utilidades ── */
     function log(msg) { document.getElementById('log').innerText = '> ' + msg; }
+
     document.getElementById('modal-overlay').addEventListener('click', function(e) {
         if (e.target === this) cerrarModal();
     });
+
     socket.on('connect',   () => socket.emit('comprobar_conexion'));
     socket.on('db_status', (data) => {
         const el = document.getElementById('db_status');

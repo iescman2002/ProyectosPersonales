@@ -1,4 +1,7 @@
 from database.ConexionDB import conectar_bd
+from models.Personaje import Personaje
+from models.Inventario import Inventario
+from models.Items import Items
 
 
 class Registros_Combate:
@@ -56,3 +59,40 @@ class Registros_Combate:
             except Exception as e:
                 print(f"❌ Error al consultar los registros_combate: {e}")
         return registros_combate_data
+    @classmethod
+    def usar_consumible(cls, id_personaje, id_item, turno, dmg_enemigo, id_enemigo):
+        # 1ero: Obtengo los bonificadores que te da el consumible (Ej: +50 Hp)
+        bonos = Items.obtener_bonos_consumible(id_item)
+        bono_vida = bonos[0]
+        bono_mana = bonos[1]
+
+        # 2ndo: Actualizo la vida y la mana del personaje con los nuevos bonos (Ej: 230/250 Hp -> 250/250 Hp)
+        Personaje.actualizar_vida_mana(id_personaje, bono_vida, bono_mana)
+        # 3ro: Registro el turno
+        cls.registrar_turno(
+            id_personaje,
+            id_enemigo,
+            turno=turno,
+            accion='consumible',
+            dano_infligido=0,
+            dano_received=dmg_enemigo,
+            resultado=f"Consumir item: {id_item}")
+        # 4to: Dañar al personaje
+        Personaje.actualizar_vida_mana(id_personaje, -dmg_enemigo, 0)
+        # 5to: Elimino del inventario el consumible utilizado
+        Inventario.consumir_consumible(id_personaje, id_item)
+        return True
+
+    @classmethod
+    def registrar_turno(cls, id_pj, id_enemigo, turno, accion, dano_infligido, dano_received, resultado):
+        with conectar_bd() as conexion:
+            try:
+                with conexion.cursor() as cursor:
+                    cursor.execute("""
+                    INSERT INTO REGISTROS_COMBATE (id_personaje, id_enemigo, turno, accion, dano_infligido, dano_received, resultado, fecha)
+                    VALUES (%s, %s,%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                    """, (id_pj, id_enemigo, turno, accion, dano_infligido, dano_received, resultado,)
+                    )
+                    conexion.commit()
+            except Exception as e:
+                print(f"Error al registrar el combate: {e}")
