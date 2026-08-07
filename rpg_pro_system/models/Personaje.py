@@ -1,13 +1,15 @@
 from database.ConexionDB import conectar_bd
 
 class Personaje:
-    def __init__(self, id, nombre, nivel, exp, oro, vida_actual, mana_actual, fuerza, agilidad, inteligencia, id_raza, id_clase):
+    def __init__(self, id, nombre, nivel, exp, oro, vida_max, vida_actual, mana_max, mana_actual, fuerza, agilidad, inteligencia, id_raza, id_clase):
         self.id = id
         self.nombre = nombre
         self.nivel = nivel
         self.exp = exp
         self.oro = oro
+        self.vida_max = vida_max
         self.vida_actual = vida_actual
+        self.mana_max = mana_max
         self.mana_actual = mana_actual
         self.fuerza = fuerza
         self.agilidad = agilidad
@@ -16,64 +18,74 @@ class Personaje:
         self.id_clase = id_clase
     @classmethod
     def obtener_personajes(cls):
-        personajes_data = []
+        personajes_data = []  # Lista vacía para guardar los diccionarios
         with conectar_bd() as conexion:
             try:
+                # 2. Usar un segundo 'with' para el cursor (se cierra solo)
                 with conexion.cursor() as cursor:
                     cursor.execute("""
-                        SELECT  p.id,
+                           SELECT 
+                                p.id,
                                 p.nombre,
-                                p.nivel,
-                                p.exp,
-                                p.oro,
-                                p.id_raza,
+                                p.nivel, 
+                                p.exp, 
+                                p.oro, 
+                                p.id_raza, 
                                 p.id_clase,
-                                r.nombre                                               AS nombre_raza,
-                                c.nombre                                               AS nombre_clase,
-                                -- Vida_max: base + raza + clase + items equipados
-                                p.vida_base + r.mod_vida + c.dado_vida + COALESCE(stats_items.bono_vida_items, 0) AS vida_max,
-                                -- Mana_max: base + raza + items equipados
-                                p.mana_base + r.mod_mana + COALESCE(stats_items.bono_mana_items, 0) AS mana_max,
-                                p.vida_actual,
-                                p.mana_actual,
-                                -- Fuerza total: fuerza pj + mod_fuerza + factor_dano + bonos_item_fueza
+                                r.nombre,
+                                c.nombre,
+                                -- Vida total: vida_base + mod_vida + dado_vida + bono_vida_item
+                                p.vida_max + r.mod_vida + c.dado_vida + COALESCE(stats_items.bono_vida_items, 0) AS vida_total,
+                                -- Mana total: mana_base + mod_mana + bono_mana_item
+                                p.mana_max + r.mod_mana + COALESCE(stats_items.bono_mana_items, 0) AS mana_total,
+                                -- Fuerza total: (fuerza_base + mod_fuerza) * factor_dano + bono_fuerza_item
                                 (p.fuerza + r.mod_fuerza) * c.factor_dano + COALESCE(stats_items.bono_fuerza_items, 0) AS fuerza_total,
-                                -- Agilidad total: agilidad pj + mod_agilidad + bonos_item_agggilidad
+                                -- Agilidad total: agilidad_base + mod_agilidad + bono_agilidad_item
                                 p.agilidad + r.mod_agilidad + COALESCE(stats_items.bono_agilidad_items, 0) AS agilidad_total,
-                                -- Inteligencia total: Inteligencia pj + mod_inteli + bonos_item_inteligencia
-                      p.inteligencia + r.mod_inteligencia+ COALESCE(stats_items.bono_inteligencia_items, 0) AS inteligencia_total
-                        FROM personajes p
-                        JOIN razas r ON p.id_raza = r.id
-                        JOIN clases_rpg c ON p.id_clase = c.id
-                        LEFT JOIN (SELECT i.id_personaje,
-                                      COALESCE(SUM(it.mod_vida * i.cantidad), 0)                     AS bono_vida_items,
-                                      COALESCE(SUM(it.mod_mana * i.cantidad), 0)                     AS bono_mana_items,
-                                      COALESCE(SUM((it.mod_fuerza + it.dano_bonus) * i.cantidad), 0) AS bono_fuerza_items,
-                                      COALESCE(SUM(it.mod_agilidad * i.cantidad), 0)                 AS bono_agilidad_items,
-                                      COALESCE(SUM(it.mod_inteligencia * i.cantidad), 0)             AS bono_inteligencia_items
-                                   FROM inventarios i
-                                   JOIN items it ON it.id = i.id_item
-                                   WHERE i.equipado = TRUE
-                                   GROUP BY i.id_personaje) stats_items
-                                  ON stats_items.id_personaje = p.id
-                        ORDER BY P.ID
-               """)
+                                -- Inteligencia total: inteligencia_base + mod_inteligencia + bono_inteligencia_item
+                                p.inteligencia + r.mod_inteligencia + COALESCE(stats_items.bono_inteligencia_items, 0) AS inteligencia_total
+                           FROM personajes p
+                           JOIN razas r ON p.id_raza = r.id
+                           JOIN clases_rpg c ON p.id_clase = c.id
+                           LEFT JOIN (
+                                SELECT
+                                    I.id_personaje,
+                                    COALESCE(SUM(IT.MOD_VIDA*I.CANTIDAD),0) AS BONO_VIDA_ITEMS,
+                                    COALESCE(SUM(IT.mod_mana * I.cantidad), 0) AS BONO_MANA_ITEMS,
+                                    COALESCE(SUM((IT.mod_fuerza + IT.dano_bonus) * I.cantidad), 0) AS BONO_FUERZA_ITEMS,
+                                    COALESCE(SUM(IT.mod_agilidad * I.cantidad), 0) AS BONO_AGILIDAD_ITEMS,
+                                    COALESCE(SUM(IT.mod_inteligencia * I.cantidad), 0) AS BONO_INTELIGENCIA_ITEMS
+                               FROM inventarios I
+                               JOIN ITEMS IT ON IT.ID = I.ID_ITEM
+                               WHERE I.EQUIPADO = TRUE
+                               GROUP BY I.ID_PERSONAJE
+                           ) STATS_ITEMS
+                           ON STATS_ITEMS.ID_PERSONAJE = P.ID
+                                   """)
                     filas = cursor.fetchall()
+                    # 3. Mapeo de filas a objetos y luego a diccionarios (para el emit)
                     for fila in filas:
-                        nuevo_p = Personaje (
-                            id= fila[0],
-                            nombre=fila[1],
-                            nivel=fila[2],
-                            exp=fila[3],
-                            oro=fila[4],
-                            id_raza=fila[5],
-                            id_clase=fila[6],
-                            vida_actual=fila[11],
-                            mana_actual=fila[12],
-                            fuerza=fila[13],
-                            agilidad=fila[14],
-                            inteligencia=fila[15],
-                        )
+                        # 1. Sacamos los datos de la fila uno por uno (por orden)
+                        id_pj = fila[0]
+                        nombre = fila[1]
+                        nivel = fila[2]
+                        exp = fila[3]
+                        oro = fila[4]
+                        id_raza = fila[5]
+                        id_clase = fila[6]
+                        nombre_raza = fila[7]
+                        nombre_clase = fila[8]
+                        vida_max = fila[9]
+                        vida_actual = vida_max
+                        mana_max = fila[10]
+                        mana_actual = mana_max
+                        fuerza = fila[11]
+                        agilidad = fila[12]
+                        inteligencia = fila[13]
+                        # 2. Creamos el objeto Personaje con esos datos
+                        nuevo_p = Personaje(id_pj, nombre, nivel, exp, oro, vida_max, vida_actual, mana_max, mana_actual, fuerza, agilidad, inteligencia, id_raza, id_clase)
+                        # 3. Lo convertimos a un "diccionario" (formato clave: valor)
+                        # Socket.io no sabe enviar objetos, pero sí sabe enviar diccionarios
                         diccionario_p = {
                             "id_pj": int(nuevo_p.id),
                             "nombre": nuevo_p.nombre,
@@ -82,16 +94,17 @@ class Personaje:
                             "oro": int(nuevo_p.oro),
                             "id_raza": int(nuevo_p.id_raza),
                             "id_clase": int(nuevo_p.id_clase),
-                            "nombre_raza": fila[7],
-                            "nombre_clase": fila[8],
-                            "vida_max": float(fila[9]),
-                            "mana_max": float(fila[10]),
+                            "nombre_raza":nombre_raza,
+                            "nombre_clase":nombre_clase,
+                            "vida_max": float(nuevo_p.vida_max),
                             "vida_actual": float(nuevo_p.vida_actual),
+                            "mana_max": float(nuevo_p.mana_max),
                             "mana_actual": float(nuevo_p.mana_actual),
                             "fuerza": float(nuevo_p.fuerza),
                             "agilidad": float(nuevo_p.agilidad),
                             "inteligencia": float(nuevo_p.inteligencia),
                         }
+                        # 4. Lo añadimos a nuestra lista final
                         personajes_data.append(diccionario_p)
                     print(f"✅ Se han enviado {len(personajes_data)} personajes.")
             except Exception as e:
@@ -107,94 +120,3 @@ class Personaje:
                     conexion.commit()
             except Exception as e:
                 print("Error actualizando el oro del personaje: ", e)
-
-    @classmethod
-    def actualizar_vida_mana(cls, id_personaje, bono_vida, bono_mana):
-        with conectar_bd() as conexion:
-            try:
-                with conexion.cursor() as cursor:
-                    cursor.execute("""
-                                   UPDATE personajes
-                                   SET vida_actual = GREATEST(0, LEAST(vida_actual + %s,
-                                                                       (SELECT p.vida_base + r.mod_vida + c.dado_vida +
-                                                                               COALESCE(SUM(it.mod_vida * i.cantidad) FILTER(WHERE i.equipado = TRUE), 0)
-                                                                        FROM personajes p
-                                                                                 JOIN razas r ON p.id_raza = r.id
-                                                                                 JOIN clases_rpg c ON p.id_clase = c.id
-                                                                                 LEFT JOIN inventarios i ON i.id_personaje = p.id
-                                                                                 LEFT JOIN items it ON it.id = i.id_item
-                                                                        WHERE p.id = %s
-                                                                        GROUP BY p.id, r.mod_vida, c.dado_vida))),
-                                       mana_actual = GREATEST(0, LEAST(mana_actual + %s,
-                                                                       (SELECT p.mana_base + r.mod_mana +
-                                                                               COALESCE(SUM(it.mod_mana * i.cantidad) FILTER(WHERE i.equipado = TRUE), 0)
-                                                                        FROM personajes p
-                                                                                 JOIN razas r ON p.id_raza = r.id
-                                                                                 LEFT JOIN inventarios i ON i.id_personaje = p.id
-                                                                                 LEFT JOIN items it ON it.id = i.id_item
-                                                                        WHERE p.id = %s
-                                                                        GROUP BY p.id, r.mod_mana)))
-                                   WHERE id = %s;
-                                   """, (bono_vida, id_personaje, bono_mana, id_personaje, id_personaje))
-                    conexion.commit()
-                    return True
-            except Exception as e:
-                print(f"Error al actualizar vida y maná: {e}")
-                return False
-    @classmethod
-    def comprobar_vida_pj(cls, id_pj):
-        with conectar_bd() as conexion:
-            try:
-                with conexion.cursor() as cursor:
-                    cursor.execute("SELECT VIDA_ACTUAL FROM PERSONAJES WHERE ID=%s", (id_pj,))
-                    resultado = cursor.fetchone()
-                    if resultado and resultado[0] >= 0:
-                        return True
-                    else:
-                        return False
-            except Exception as e:
-                print("Error comprobar el vida del personaje: ", e)
-                return False
-    # Actualizo la vida_actual y la mana_actual de personaje al cargar el programa
-    @classmethod
-    def resetear_vida_mana(cls):
-        with conectar_bd() as conexion:
-            try:
-                with conexion.cursor() as cursor:
-                    # Usamos una CTE unificada (calculo_totales) para evitar tocar la tabla 'p' en los JOINs
-                    cursor.execute("""
-                        WITH calculo_totales AS (
-                            SELECT 
-                                p.id AS personaje_id,
-                                (
-                                    p.vida_base 
-                                    + r.mod_vida 
-                                    + c.dado_vida 
-                                    + COALESCE(SUM(it.mod_vida * i.cantidad) FILTER (WHERE i.equipado = TRUE), 0)
-                                ) AS vida_total,
-                                (
-                                    p.mana_base 
-                                    + r.mod_mana 
-                                    + COALESCE(SUM(it.mod_mana * i.cantidad) FILTER (WHERE i.equipado = TRUE), 0)
-                                ) AS mana_total
-                            FROM personajes p
-                            JOIN razas r ON p.id_raza = r.id
-                            JOIN clases_rpg c ON p.id_clase = c.id
-                            LEFT JOIN inventarios i ON i.id_personaje = p.id
-                            LEFT JOIN items it ON it.id = i.id_item
-                            GROUP BY p.id, r.mod_vida, c.dado_vida, r.mod_mana
-                        )
-                        UPDATE personajes p
-                        SET 
-                            vida_actual = ct.vida_total,
-                            mana_actual = ct.mana_total
-                        FROM calculo_totales ct
-                        WHERE p.id = ct.personaje_id;
-                    """)
-                    conexion.commit()
-                    print("✅ Vida y maná de todos los personajes reseteados con éxito.")
-                    return True
-
-            except Exception as e:
-                print(f"❌ Error al resetear estadísticas: {e}")
-                return False

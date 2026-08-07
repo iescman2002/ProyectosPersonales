@@ -1,6 +1,4 @@
 import os
-from unittest import result
-
 from database.ConexionDB import conectar_bd  # importo la conexion de la base de datos
 from models.Habilidades import Habilidades
 from models.Clase_RPG import Clase_RPG
@@ -24,6 +22,7 @@ socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=
 @app.route('/')
 def index():
     return render_template('index.html')
+
 # CREAR APIS
 @app.route('/api/clases')
 def clases():
@@ -70,8 +69,6 @@ def probar_conexion():
     """
     Usa el gestor de contexto importado para verificar la BD.
     """
-    # RESETEO LA VIDA DE LOS PERSONAJES CADA VEZ QUE REINICIO UNA PAGINA (CADA VEZ QUE COMPRUEBO CONEXION)
-    Personaje.resetear_vida_mana()
     # Usamos el nombre exacto de la función que importamos
     with conectar_bd() as conexion:
         if conexion:
@@ -132,16 +129,5 @@ def equipar_desequipar_item(data):
 @socketio.on('elegir_enemigo')
 def elegir_enemigo():
     emit("elegir_enemigo",Enemigos.obtener_enemigos())
-@socketio.on('consumir_consumible')
-def consumir_consumible(data):
-    # 1ero: Obtengo los datos del frontend
-    id_pj = int(data.get('id_personaje'))
-    id_item = int(data.get('id_item'))
-    turno = data.get('turno')
-    dmg_recibido = data.get('dmg_enemigo')
-    id_enemigo = int(data.get('id_enemigo'))
-
-    emit('consumir_consumible',Registros_Combate.usar_consumible(id_pj,id_item,turno,dmg_recibido,id_enemigo)
-)
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
