@@ -145,5 +145,21 @@ def turno_pj(data):
             emit("turno_pj", Inventario.obtener_inventario_pj(id_pj)) # Muestro todos los consumibles disponibles del personaje.
         case _: # Si el jugador ha escogido huir:
             emit("turno_pj", "FIN") # Emito la orden encargada de terminar el combate.
+@socketio.on('consumir_item')
+def consumir_item(data):
+    # 1. Recibo el id del personaje, el item que va a consumir y el turno actual
+    id_pj = int(data.get('id_personaje'))
+    id_item = int(data.get('id_item'))
+    id_enemigo = int(data.get('id_enemigo'))
+    dmg_enemigo = int(data.get('dmg_enemigo'))
+    turno_actual = int(data.get('turno_actual'))
+    # 2. Consumo el item seleccionado
+    consumido = Inventario.consumir_consumible(id_pj,id_item)
+    if consumido: # Si se ha podido consumir el item:
+        # 3. Dejo registro en la base de datos del turno efectuado.
+        Registros_Combate.registrar_turno(id_pj, id_enemigo, turno_actual, "ITEM CONSUMIDO", 0, dmg_enemigo,"ITEM CONSUMIDO")
+        # 4. Incremento 1 al turno para cambiar de turno
+        turno_actual = turno_actual + 1
+    emit('consumir_item', turno_actual)
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

@@ -56,3 +56,15 @@ class Registros_Combate:
             except Exception as e:
                 print(f"❌ Error al consultar los registros_combate: {e}")
         return registros_combate_data
+    @classmethod
+    def registrar_turno(cls, id_pj, id_enemigo, turno, accion, dmg_infligido, dmg_recibido, resultado):
+        with conectar_bd() as conexion:
+            try:
+                # 2. Usar un segundo 'with' para el cursor (se cierra solo)
+                with conexion.cursor() as cursor:
+                    cursor.execute(
+                        "INSERT INTO REGISTROS_COMBATE (id_personaje, id_enemigo, turno, accion, dano_infligido, dano_received, resultado, fecha) VALUES (%s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)", (id_pj,id_enemigo,turno,accion,dmg_infligido,dmg_recibido,resultado)
+                    )
+                    conexion.commit()
+            except Exception as e:
+                print(f"Error al registrar el combate: {e}")

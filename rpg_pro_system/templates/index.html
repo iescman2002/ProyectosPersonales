@@ -502,6 +502,12 @@
     let enemigoSeleccionado  = null;
     let turnoActual          = 1;    // ← turno actual del combate (1 por defecto)
     let accionCombateActual  = null; // ← última acción escogida (1 Atacar, 2 Inventario, 3 Huir)
+    let itemConsumoPendiente = null; // ← consumible que se está intentando consumir
+    let cacheConsumiblesCombate = []; // ← caché de consumibles mostrados en combate
+    let heroeVidaActual = 0;
+    let heroeVidaMax    = 0;
+    let heroeManaActual = 0;
+    let heroeManaMax    = 0;
 
     const rarezaPesos = { 'Común': 1, 'Raro': 2, 'Épico': 3, 'Legendario': 4 };
 
@@ -917,6 +923,10 @@
         enemigoSeleccionado = listaEnemigosCache.find(e => String(e.id) === String(idEnemigo));
         const pj = listaPersonajesCache.find(p => p.id_pj == personajeCombateId);
         if (!enemigoSeleccionado || !pj) return;
+        heroeVidaMax    = pj.vida_max;
+        heroeVidaActual = pj.vida_max;
+        heroeManaMax    = pj.mana_max;
+        heroeManaActual = pj.mana_max;
         renderFichaHeroe(pj);
         renderFichaEnemigo(enemigoSeleccionado);
         arena.style.display = 'block';
@@ -955,6 +965,41 @@
         }
     });
 
+    /* ── Consumir un item durante el combate ── */
+    function consumirItem(idItem) {
+        const item = cacheConsumiblesCombate.find(it => it.id_item === idItem);
+        if (!item) return;
+        itemConsumoPendiente = item;
+        socket.emit('consumir_item', {
+            id_personaje: personajeCombateId,
+            id_item: idItem,
+            id_enemigo: enemigoSeleccionado ? enemigoSeleccionado.id : null,
+            dmg_enemigo: enemigoSeleccionado ? enemigoSeleccionado.dano_base : 0,
+            turno_actual: turnoActual
+        });
+    }
+
+    socket.on('consumir_item', (nuevoTurno) => {
+        if (!itemConsumoPendiente) return;
+        if (nuevoTurno > turnoActual) {
+            // El consumo tuvo éxito: aplicamos los modificadores del item a la vida/maná del héroe
+            heroeVidaActual = Math.max(0, Math.min(heroeVidaActual + (itemConsumoPendiente.mod_vida || 0), heroeVidaMax));
+            heroeManaActual = Math.max(0, Math.min(heroeManaActual + (itemConsumoPendiente.mod_mana || 0), heroeManaMax));
+            // El enemigo ataca al finalizar el turno
+            const dmgEnemigo = enemigoSeleccionado ? (enemigoSeleccionado.dano_base || 0) : 0;
+            heroeVidaActual = Math.max(0, heroeVidaActual - dmgEnemigo);
+            turnoActual = nuevoTurno;
+            actualizarTurnoCombate();
+            const pj = listaPersonajesCache.find(p => p.id_pj == personajeCombateId);
+            if (pj) renderFichaHeroe(pj);
+            log(`🧪 ¡${itemConsumoPendiente.nombre} consumido! 👹 El enemigo ataca causando ${dmgEnemigo} de daño. ❤️ ${heroeVidaActual}/${heroeVidaMax} | 💧 ${heroeManaActual}/${heroeManaMax}`);
+            volverAccionesCombate();
+        } else {
+            log('❌ No se ha podido consumir el objeto.');
+        }
+        itemConsumoPendiente = null;
+    });
+
     function mostrarHabilidadesCombate(habilidades) {
         document.getElementById('acciones-principales').style.display = 'none';
         document.getElementById('combate-inventario-container').style.display = 'none';
@@ -986,6 +1031,7 @@
         const cont = document.getElementById('combate-inventario-container');
         cont.style.display = 'block';
         const consumibles = (items || []).filter(it => it.tipo === 'Consumible');
+        cacheConsumiblesCombate = consumibles; // ← guardamos referencia para poder aplicar sus modificadores al consumir
         let html = '<h4>🎒 Consumibles disponibles</h4>';
         if (consumibles.length === 0) {
             html += '<p style="color:#888;">No tienes consumibles en el inventario.</p>';
@@ -1001,7 +1047,7 @@
                         <div class="item-desc">${it.descripcion || ''}</div>
                         <div class="item-footer">
                             <span>×${it.cantidad}</span>
-                            <button class="btn btn-subir" style="padding: 4px 10px; font-size: 0.8em;">🧪 Consumir</button>
+                            <button class="btn btn-subir" style="padding: 4px 10px; font-size: 0.8em;" onclick="consumirItem(${it.id_item})">🧪 Consumir</button>
                         </div>
                     </div>`;
             });
@@ -1041,6 +1087,11 @@
     }
 
     function renderFichaHeroe(pj) {
+        // Sincronizamos los máximos con los del personaje (por si han cambiado al equipar objetos)
+        heroeVidaMax = pj.vida_max;
+        heroeManaMax = pj.mana_max;
+        const pctVida = heroeVidaMax > 0 ? Math.min((heroeVidaActual / heroeVidaMax) * 100, 100) : 100;
+        const pctMana = heroeManaMax > 0 ? Math.min((heroeManaActual / heroeManaMax) * 100, 100) : 100;
         document.getElementById('ficha-heroe').innerHTML = `
             <div class="ficha-encabezado">
                 <div>
@@ -1050,12 +1101,12 @@
                 <span class="ficha-nivel-badge heroe">Nv. ${pj.nivel}</span>
             </div>
             <div class="ficha-barra-grupo">
-                <div class="ficha-barra-label"><span>❤️ Vida</span><span>${pj.vida_max}</span></div>
-                <div class="ficha-barra-bg"><div class="ficha-barra-fill vida" style="width:100%"></div></div>
+                <div class="ficha-barra-label"><span>❤️ Vida</span><span>${heroeVidaActual} / ${heroeVidaMax}</span></div>
+                <div class="ficha-barra-bg"><div class="ficha-barra-fill vida" style="width:${pctVida}%"></div></div>
             </div>
             <div class="ficha-barra-grupo">
-                <div class="ficha-barra-label"><span>💧 Maná</span><span>${pj.mana_max}</span></div>
-                <div class="ficha-barra-bg"><div class="ficha-barra-fill mana" style="width:100%"></div></div>
+                <div class="ficha-barra-label"><span>💧 Maná</span><span>${heroeManaActual} / ${heroeManaMax}</span></div>
+                <div class="ficha-barra-bg"><div class="ficha-barra-fill mana" style="width:${pctMana}%"></div></div>
             </div>
             <div class="ficha-stats">
                 <div class="ficha-stat"><span class="ficha-stat-icono">💪</span><span class="ficha-stat-label">Fuerza</span><span class="ficha-stat-valor">${pj.fuerza}</span></div>

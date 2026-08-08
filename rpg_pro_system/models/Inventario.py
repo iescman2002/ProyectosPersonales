@@ -175,3 +175,30 @@ class Inventario:
                 except Exception as e:
                     print(f"Error al equipar el item: {e}")
                     return False
+    @classmethod
+    def consumir_consumible(cls, id_personaje, id_item):
+        with conectar_bd() as conexion:
+            try:
+                with conexion.cursor() as cursor:
+                    # 1ero: Comprobamos la cantidad del item
+                    cursor.execute(
+                        "SELECT cantidad FROM INVENTARIOS WHERE ID_PERSONAJE=%s AND ID_ITEM=%s",
+                        (id_personaje, id_item)
+                    )
+                    fila = cursor.fetchone()
+                    cantidad_actual = fila[0]
+                    # Si solo queda 1 item eliminamos la fila al consumirlo
+                    if cantidad_actual <= 1:
+                        cursor.execute("DELETE FROM INVENTARIOS WHERE ID_PERSONAJE = %s AND ID_ITEM = %s",
+                                       (id_personaje, id_item))
+                    # Si la cantidad es > 1 solo restamos 1 a la cantidad
+                    else:
+                        cursor.execute(
+                            "UPDATE INVENTARIOS SET CANTIDAD = CANTIDAD - 1 WHERE ID_PERSONAJE=%s AND ID_ITEM=%s",
+                            (id_personaje, id_item)
+                        )
+                    conexion.commit()
+                    return True
+            except Exception as e:
+                print(f"Error al consumir_consumible: {e}")
+                return False
