@@ -129,5 +129,21 @@ def equipar_desequipar_item(data):
 @socketio.on('elegir_enemigo')
 def elegir_enemigo():
     emit("elegir_enemigo",Enemigos.obtener_enemigos())
+# FUNCIÓN PRINCIPAL ENCARGADA DE GESTIONAR LOS TURNOS DEL COMBATE DEL SISTEMA
+@socketio.on('ejecutar_turno_pj')
+def turno_pj(data):
+    # 0. Muestro en pantalla las siguientes opciones para el combate (Atacar, consumir poción, huir...) en el index.html
+    # 1. Recibo el id del personaje y el turno
+    id_pj = int(data.get('id_personaje'))
+    # 2. Recibo la opción escogida en el turno del jugador
+    accion = int(data.get('accion_escogida'))
+    # 3. Llamo a la función principal de la acción escogida
+    match accion:
+        case 1: # Si ha escogido atacar:
+            emit("turno_pj", Personajes_Habilidades.mostrar_habilidades_pj(id_pj)) # Muestro las habilidades disponibles del personaje
+        case 2: # Si ha escogido inventario (usar un consumible):
+            emit("turno_pj", Inventario.obtener_inventario_pj(id_pj)) # Muestro todos los consumibles disponibles del personaje.
+        case _: # Si el jugador ha escogido huir:
+            emit("turno_pj", "FIN") # Emito la orden encargada de terminar el combate.
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

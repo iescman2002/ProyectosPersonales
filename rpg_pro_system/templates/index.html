@@ -290,10 +290,16 @@
             background: linear-gradient(to bottom, transparent, #e74c3c, transparent);
         }
         .batalla-acciones {
-            margin-top: 20px; padding: 16px 20px;
+            margin-top: 20px; padding: 20px;
             background: #141414; border: 1px dashed #2a2a2a; border-radius: 8px;
-            text-align: center; color: #444; font-size: 0.85em; font-style: italic;
         }
+        .batalla-acciones-botones {
+            display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+        }
+        .batalla-acciones-botones .btn { padding: 10px 22px; font-size: 0.9em; }
+        .combate-sub-panel { margin-top: 4px; }
+        .combate-sub-panel h4 { margin: 0 0 12px; color: #ccc; font-size: 0.95em; }
+        #combate-fin-container p { margin: 0; }
     </style>
 </head>
 <body>
@@ -437,6 +443,9 @@
             <div id="batalla-arena">
                 <hr style="border:0.5px solid #2a2a2a; margin: 24px 0 20px;">
                 <h3 style="margin-bottom: 18px;">⚔️ Vista de Batalla</h3>
+                <div id="turno-combate" style="display:block; text-align:center; margin:0 0 18px; padding:10px; background:#252525; border:1px solid #555; border-radius:6px; color:#f1c40f; font-weight:bold;">
+                    Turno actual: 1
+                </div>
                 <div class="batalla-escenario">
                     <div class="batalla-ficha ficha-heroe" id="ficha-heroe"></div>
                     <div class="batalla-vs">
@@ -447,7 +456,14 @@
                     <div class="batalla-ficha ficha-enemigo" id="ficha-enemigo"></div>
                 </div>
                 <div class="batalla-acciones">
-                    🎮 Aquí irán los botones de acción: Atacar, Inventario, Habilidades, Huir…
+                    <div id="acciones-principales" class="batalla-acciones-botones">
+                        <button class="btn btn-subir" onclick="ejecutarTurno(1)">⚔️ Atacar</button>
+                        <button class="btn btn-subir" style="background:#8e44ad;" onclick="ejecutarTurno(2)">🎒 Inventario</button>
+                        <button class="btn btn-desbloquear" onclick="ejecutarTurno(3)">🏃 Huir</button>
+                    </div>
+                    <div id="combate-habilidades-container" class="combate-sub-panel" style="display:none;"></div>
+                    <div id="combate-inventario-container" class="combate-sub-panel" style="display:none;"></div>
+                    <div id="combate-fin-container" class="combate-sub-panel" style="display:none; text-align:center;"></div>
                 </div>
             </div>
         </div>
@@ -484,6 +500,8 @@
     let cacheItemsInventario = [];   // ← caché para filtrado de inventario
     let listaEnemigosCache   = [];
     let enemigoSeleccionado  = null;
+    let turnoActual          = 1;    // ← turno actual del combate (1 por defecto)
+    let accionCombateActual  = null; // ← última acción escogida (1 Atacar, 2 Inventario, 3 Huir)
 
     const rarezaPesos = { 'Común': 1, 'Raro': 2, 'Épico': 3, 'Legendario': 4 };
 
@@ -872,6 +890,7 @@
         enemigoSeleccionado = null;
         document.getElementById('select-enemigo').value = '';
         arena.style.display = 'none';
+        resetAccionesCombate();
         if (personajeCombateId) {
             container.style.display = 'block';
             log('🎯 Personaje asignado a la arena. Cargando enemigos...');
@@ -901,7 +920,124 @@
         renderFichaHeroe(pj);
         renderFichaEnemigo(enemigoSeleccionado);
         arena.style.display = 'block';
+        turnoActual = 1;
+        actualizarTurnoCombate();
+        resetAccionesCombate();
         log(`⚔️ ¡${pj.nombre} vs ${enemigoSeleccionado.nombre}! ¡Que comience la batalla!`);
+    }
+
+    function actualizarTurnoCombate() {
+        const indicador = document.getElementById('turno-combate');
+        if (indicador) {
+            indicador.textContent = `🤼 Turno actual: ${turnoActual}`;
+        }
+    }
+
+    /* ── Turno de combate (Atacar / Inventario / Huir) ── */
+    function ejecutarTurno(accion) {
+        accionCombateActual = accion;
+        socket.emit('ejecutar_turno_pj', {
+            turno: turnoActual,
+            accion_escogida: accion,
+            id_personaje: personajeCombateId
+        });
+    }
+
+    socket.on('turno_pj', (resultado) => {
+        if (resultado === 'FIN') {
+            mostrarFinCombate();
+            return;
+        }
+        if (accionCombateActual === 1) {
+            mostrarHabilidadesCombate(resultado);
+        } else if (accionCombateActual === 2) {
+            mostrarConsumiblesCombate(resultado);
+        }
+    });
+
+    function mostrarHabilidadesCombate(habilidades) {
+        document.getElementById('acciones-principales').style.display = 'none';
+        document.getElementById('combate-inventario-container').style.display = 'none';
+        const cont = document.getElementById('combate-habilidades-container');
+        cont.style.display = 'block';
+        const desbloqueadas = (habilidades || []).filter(h => h.habilidad_desbloqueada === true);
+        let html = '<h4>⚔️ Habilidades disponibles</h4>';
+        if (desbloqueadas.length === 0) {
+            html += '<p style="color:#888;">No tienes habilidades desbloqueadas.</p>';
+        } else {
+            desbloqueadas.forEach(h => {
+                html += `
+                    <div class="habilidad-item estado-normal">
+                        <div class="habilidad-info">
+                            <strong>${h.nombre}</strong><br>
+                            <small>Daño base: ${h.dano_base} | Coste maná: ${h.costo_mana}</small>
+                        </div>
+                        <button class="btn btn-subir">🔥 Usar habilidad</button>
+                    </div>`;
+            });
+        }
+        html += '<button class="btn btn-cancelar" style="margin-top:12px;" onclick="volverAccionesCombate()">⬅ Volver</button>';
+        cont.innerHTML = html;
+    }
+
+    function mostrarConsumiblesCombate(items) {
+        document.getElementById('acciones-principales').style.display = 'none';
+        document.getElementById('combate-habilidades-container').style.display = 'none';
+        const cont = document.getElementById('combate-inventario-container');
+        cont.style.display = 'block';
+        const consumibles = (items || []).filter(it => it.tipo === 'Consumible');
+        let html = '<h4>🎒 Consumibles disponibles</h4>';
+        if (consumibles.length === 0) {
+            html += '<p style="color:#888;">No tienes consumibles en el inventario.</p>';
+        } else {
+            html += '<div class="inventario-grid">';
+            consumibles.forEach(it => {
+                html += `
+                    <div class="item-card rareza-${it.rareza}">
+                        <div class="item-nombre">
+                            🧪 ${it.nombre}
+                            <span class="badge badge-rareza-${it.rareza}">${it.rareza}</span>
+                        </div>
+                        <div class="item-desc">${it.descripcion || ''}</div>
+                        <div class="item-footer">
+                            <span>×${it.cantidad}</span>
+                            <button class="btn btn-subir" style="padding: 4px 10px; font-size: 0.8em;">🧪 Consumir</button>
+                        </div>
+                    </div>`;
+            });
+            html += '</div>';
+        }
+        html += '<button class="btn btn-cancelar" style="margin-top:12px;" onclick="volverAccionesCombate()">⬅ Volver</button>';
+        cont.innerHTML = html;
+    }
+
+    function mostrarFinCombate() {
+        document.getElementById('acciones-principales').style.display = 'none';
+        document.getElementById('combate-habilidades-container').style.display = 'none';
+        document.getElementById('combate-inventario-container').style.display = 'none';
+        const fin = document.getElementById('combate-fin-container');
+        fin.style.display = 'block';
+        const nombreEnemigo = enemigoSeleccionado ? enemigoSeleccionado.nombre : 'El enemigo';
+        fin.innerHTML = `<p style="color:#e74c3c; font-weight:bold;">🏳️ Combate finalizado. ¡${nombreEnemigo} es el ganador!</p>`;
+        log('🏳️ Combate finalizado: el enemigo es el ganador.');
+    }
+
+    function volverAccionesCombate() {
+        document.getElementById('combate-habilidades-container').style.display = 'none';
+        document.getElementById('combate-inventario-container').style.display = 'none';
+        document.getElementById('acciones-principales').style.display = 'flex';
+        accionCombateActual = null;
+    }
+
+    function resetAccionesCombate() {
+        accionCombateActual = null;
+        document.getElementById('combate-habilidades-container').style.display = 'none';
+        document.getElementById('combate-habilidades-container').innerHTML = '';
+        document.getElementById('combate-inventario-container').style.display = 'none';
+        document.getElementById('combate-inventario-container').innerHTML = '';
+        document.getElementById('combate-fin-container').style.display = 'none';
+        document.getElementById('combate-fin-container').innerHTML = '';
+        document.getElementById('acciones-principales').style.display = 'flex';
     }
 
     function renderFichaHeroe(pj) {
