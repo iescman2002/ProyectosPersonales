@@ -51,3 +51,8 @@ class Enemigos:
             except Exception as e:
                     print(f"❌ Error al consultar los enemigos: {e}")
         return enemigos_data
+
+    @classmethod
+    def verificarMuerteEnemigo(cls, hp_enemigo, dmg_habilidad):
+        # Si el dmg de la habilidad es suficiente para reducir la vida del enemigo a 0 o más devuelvo true, sino False
+        return hp_enemigo <= dmg_habilidad

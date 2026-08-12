@@ -149,3 +149,8 @@ class Personajes_Habilidades:
                 print("Habilidad subida de nivel")
             except Exception as e:
                 print(f"Error al subir el nivel de la habilidad: {e}")
+
+    @classmethod
+    def verificarManaParaUsarHabilidad(cls, coste_habilidad, mana_actual):
+        # Si hay mana suficiente para tirar la habilidad devuelve True sino False
+        return mana_actual >= coste_habilidad

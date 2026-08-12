@@ -161,5 +161,48 @@ def consumir_item(data):
         # 4. Incremento 1 al turno para cambiar de turno
         turno_actual = turno_actual + 1
     emit('consumir_item', turno_actual)
+
+@socketio.on('usar_habilidad')
+def usar_habilidad(data):
+    # 1. Recibo todos los datos necesarios para registrar y procesar el combate:
+    id_pj = int(data.get('id_personaje'))
+    mana_actual = int(data.get('mana_actual'))
+    id_habilidad = int(data.get('id_habilidad'))
+    dmg_habilidad = int(data.get('dmg_habilidad'))
+    coste_habilidad = int(data.get('mana_habilidad'))
+    id_enemigo = int(data.get('id_enemigo'))
+    hp_enemigo = int(data.get('hp_enemigo'))
+    dmg_enemigo = int(data.get('dmg_enemigo'))
+    turno_actual = int(data.get('turno_actual'))
+
+    # 2. Verifico si tengo mana suficiente para usar la habilidad:
+    puedo_usar = Personajes_Habilidades.verificarManaParaUsarHabilidad(coste_habilidad, mana_actual)
+    enemigo_eliminado = False
+
+    # 2.5 Si puedo usar la habilidad:
+    if puedo_usar:
+        # 2.5 Verifico si al usar la habilidad mataré al enemigo o no y lo actualizo en su variable:
+        enemigo_eliminado = Enemigos.verificarMuerteEnemigo(hp_enemigo, dmg_habilidad)
+
+        # 3. Registro en la base de datos cuando uso la habilidad si mato o no al enemigo:
+        if enemigo_eliminado:
+            Registros_Combate.registrar_turno(id_pj, id_enemigo, turno_actual, "HABILIDAD USADA", dmg_habilidad, dmg_enemigo, "ENEMIGO ELIMINADO.")
+        else:
+            Registros_Combate.registrar_turno(id_pj, id_enemigo, turno_actual, "HABILIDAD USADA", dmg_habilidad, dmg_enemigo, "HABILIDAD USADA.")
+        # 4. Incremento 1 al turno para seguir el ritmo del combate:
+        turno_actual = turno_actual+1
+    # 5. Devuelvo si he podido usar la habilidad, el proximo turno y si el enemigo ha fallecido (para finalizar combate)
+    emit('usar_habilidad', {
+        "habilidad_usada": puedo_usar,
+        "turno": turno_actual,
+        "enemigo_eliminado": enemigo_eliminado
+    })
+
+    ##################### FALTA POR AGREGAR EN ORDEN DE PRIORIDAD:
+    ##################### -DAR RECOMPENSA AL PJ AL GANAR
+    ##################### -SISTEMA DE EXP HABILIDADES CREO???
+    ##################### -MEJORAR MENÚ VICTORIA Y DERROTA
+    ##################### -DETALLAR LOS REGISTROS DEL COMBATE
+    ##################### -HACER FUNCIONALES LAS HABILIDADES CON FUNCIONES ESPECIFICAS (NO DAÑAN ENEMIGO, HACEN OTRAS FUNCIONES).
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

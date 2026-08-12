@@ -508,6 +508,9 @@
     let heroeVidaMax    = 0;
     let heroeManaActual = 0;
     let heroeManaMax    = 0;
+    let enemigoVidaActual = 0;
+    let enemigoVidaMax    = 0;
+    let habilidadUsoPendiente = null; // ← habilidad que se está intentando usar (pendiente de confirmar en el modal)
 
     const rarezaPesos = { 'Común': 1, 'Raro': 2, 'Épico': 3, 'Legendario': 4 };
 
@@ -888,6 +891,82 @@
         }
     });
 
+    /* ── Modal Usar Habilidad (menú simple de confirmación) ── */
+    function abrirModalUsoHabilidad(idHabilidad, nombreHabilidad, danoBase, costeMana) {
+        habilidadUsoPendiente = { id: idHabilidad, nombre: nombreHabilidad, dano_base: danoBase, costo_mana: costeMana };
+        const manaSuficiente = heroeManaActual >= costeMana;
+
+        document.getElementById('modal-titulo').textContent    = `🔥 Usar: ${nombreHabilidad}`;
+        document.getElementById('modal-subtitulo').textContent = 'Confirma el uso de esta habilidad en combate.';
+
+        const btnConfirmar = document.getElementById('btn-confirmar-modal');
+        btnConfirmar.textContent = '🔥 Confirmar uso';
+        btnConfirmar.setAttribute('onclick', 'confirmarUsoHabilidad()');
+        btnConfirmar.disabled = !manaSuficiente;
+
+        document.getElementById('modal-requisitos').innerHTML = `
+            <li class="req-item ${manaSuficiente ? 'cumplido' : 'pendiente'}">
+                <div class="req-nombre"><span>${manaSuficiente ? '✅' : '❌'}</span>${manaSuficiente ? 'Maná suficiente' : 'Maná insuficiente'}</div>
+                <div class="req-progreso-label">Maná actual: ${heroeManaActual} / Coste: ${costeMana}</div>
+                <div class="req-progreso-label" style="margin-top:4px;">🗡️ Daño estimado: ${danoBase}</div>
+            </li>`;
+        document.getElementById('modal-overlay').classList.add('visible');
+    }
+
+    function confirmarUsoHabilidad() {
+        if (!habilidadUsoPendiente || !enemigoSeleccionado) return;
+        socket.emit('usar_habilidad', {
+            id_personaje: personajeCombateId,
+            mana_actual: heroeManaActual,
+            id_habilidad: habilidadUsoPendiente.id,
+            dmg_habilidad: habilidadUsoPendiente.dano_base,
+            mana_habilidad: habilidadUsoPendiente.costo_mana,
+            id_enemigo: enemigoSeleccionado.id,
+            hp_enemigo: enemigoVidaActual,
+            dmg_enemigo: enemigoSeleccionado.dano_base,
+            turno_actual: turnoActual
+        });
+        ocultarModal();
+    }
+
+    socket.on('usar_habilidad', (res) => {
+        if (!habilidadUsoPendiente) return;
+        if (res && res.habilidad_usada) {
+            // Aplicamos el daño de la habilidad al enemigo y restamos el coste de maná al héroe
+            enemigoVidaActual = Math.max(0, enemigoVidaActual - habilidadUsoPendiente.dano_base);
+            heroeManaActual   = Math.max(0, heroeManaActual - habilidadUsoPendiente.costo_mana);
+            renderFichaEnemigo(enemigoSeleccionado);
+            const pj = listaPersonajesCache.find(p => p.id_pj == personajeCombateId);
+            if (pj) renderFichaHeroe(pj);
+
+            if (res.enemigo_eliminado || enemigoVidaActual <= 0) {
+                mostrarFinCombate(
+                    `<p style="color:#2ecc71; font-weight:bold;">🏆 ¡Victoria! Has derrotado a ${enemigoSeleccionado.nombre}.</p>`,
+                    '🏆 Combate finalizado: ¡victoria del héroe!'
+                );
+            } else {
+                // El enemigo contraataca al finalizar el turno
+                const dmgEnemigo = enemigoSeleccionado.dano_base || 0;
+                heroeVidaActual = Math.max(0, heroeVidaActual - dmgEnemigo);
+                turnoActual = res.turno;
+                actualizarTurnoCombate();
+                if (pj) renderFichaHeroe(pj);
+                log(`🔥 ¡${habilidadUsoPendiente.nombre} usada! Daño infligido: ${habilidadUsoPendiente.dano_base}. 👹 El enemigo contraataca causando ${dmgEnemigo} de daño.`);
+                if (heroeVidaActual <= 0) {
+                    mostrarFinCombate(
+                        `<p style="color:#e74c3c; font-weight:bold;">💀 Has sido derrotado. ¡${enemigoSeleccionado.nombre} es el ganador!</p>`,
+                        '💀 Combate finalizado: el héroe ha sido derrotado.'
+                    );
+                } else {
+                    volverAccionesCombate();
+                }
+            }
+        } else {
+            log('❌ No tienes suficiente maná para usar esa habilidad.');
+        }
+        habilidadUsoPendiente = null;
+    });
+
     /* ── Combate ── */
     function seleccionarPersonajeCombate() {
         personajeCombateId = document.getElementById('select-personaje-combate').value;
@@ -927,6 +1006,8 @@
         heroeVidaActual = pj.vida_max;
         heroeManaMax    = pj.mana_max;
         heroeManaActual = pj.mana_max;
+        enemigoVidaMax    = enemigoSeleccionado.vida_max;
+        enemigoVidaActual = enemigoSeleccionado.vida_max;
         renderFichaHeroe(pj);
         renderFichaEnemigo(enemigoSeleccionado);
         arena.style.display = 'block';
@@ -1011,13 +1092,23 @@
             html += '<p style="color:#888;">No tienes habilidades desbloqueadas.</p>';
         } else {
             desbloqueadas.forEach(h => {
+                const esAvanzada = h.habilidad_avanzada === true;
+                const esPasiva   = (h.tipo || '').toLowerCase() === 'pasiva';
+                const badgeTipo     = `<span class="badge badge-${h.tipo}">${h.tipo}</span>`;
+                const badgeAvanzada = esAvanzada ? `<span class="badge badge-avanzada">⚔️ Avanzada</span>` : '';
+                const detalleHTML = esPasiva
+                    ? `${h.descripcion || ''}`
+                    : `Daño base: ${h.dano_base} | Coste maná: ${h.costo_mana}<br>${h.descripcion || ''}`;
+                const botonHTML = esPasiva
+                    ? ''
+                    : `<button class="btn btn-subir" onclick="abrirModalUsoHabilidad(${h.id}, '${h.nombre}', ${h.dano_base}, ${h.costo_mana})">🔥 Usar habilidad</button>`;
                 html += `
                     <div class="habilidad-item estado-normal">
                         <div class="habilidad-info">
-                            <strong>${h.nombre}</strong><br>
-                            <small>Daño base: ${h.dano_base} | Coste maná: ${h.costo_mana}</small>
+                            <strong>${h.nombre}</strong> ${badgeTipo} ${badgeAvanzada}<br>
+                            <small>${detalleHTML}</small>
                         </div>
-                        <button class="btn btn-subir">🔥 Usar habilidad</button>
+                        ${botonHTML}
                     </div>`;
             });
         }
@@ -1057,15 +1148,20 @@
         cont.innerHTML = html;
     }
 
-    function mostrarFinCombate() {
+    function mostrarFinCombate(mensajeHTML, mensajeLog) {
         document.getElementById('acciones-principales').style.display = 'none';
         document.getElementById('combate-habilidades-container').style.display = 'none';
         document.getElementById('combate-inventario-container').style.display = 'none';
         const fin = document.getElementById('combate-fin-container');
         fin.style.display = 'block';
-        const nombreEnemigo = enemigoSeleccionado ? enemigoSeleccionado.nombre : 'El enemigo';
-        fin.innerHTML = `<p style="color:#e74c3c; font-weight:bold;">🏳️ Combate finalizado. ¡${nombreEnemigo} es el ganador!</p>`;
-        log('🏳️ Combate finalizado: el enemigo es el ganador.');
+        if (mensajeHTML) {
+            fin.innerHTML = mensajeHTML;
+        } else {
+            // Huida: por defecto el enemigo gana
+            const nombreEnemigo = enemigoSeleccionado ? enemigoSeleccionado.nombre : 'El enemigo';
+            fin.innerHTML = `<p style="color:#e74c3c; font-weight:bold;">🏳️ Combate finalizado. ¡${nombreEnemigo} es el ganador!</p>`;
+        }
+        log(mensajeLog || '🏳️ Combate finalizado: el enemigo es el ganador.');
     }
 
     function volverAccionesCombate() {
@@ -1119,14 +1215,11 @@
     }
 
     function renderFichaEnemigo(e) {
-        const vida        = e.vida_max    ?? '—';
         const dano        = e.dano_base   ?? '—';
         const exp         = e.exp_recom   ?? '—';
         const oro         = e.oro_recom   ?? '—';
         const descripcion = e.descripcion ?? 'Sin descripción.';
-        const vidaActual  = e.vida ?? e.vida_max ?? 0;
-        const pctVida = (typeof e.vida_max === 'number' && e.vida_max > 0)
-            ? Math.min((vidaActual / e.vida_max) * 100, 100) : 100;
+        const pctVida = enemigoVidaMax > 0 ? Math.min((enemigoVidaActual / enemigoVidaMax) * 100, 100) : 100;
 
         document.getElementById('ficha-enemigo').innerHTML = `
             <div class="ficha-encabezado">
@@ -1137,7 +1230,7 @@
                 <span class="ficha-nivel-badge enemigo">Nv. ${e.nivel}</span>
             </div>
             <div class="ficha-barra-grupo">
-                <div class="ficha-barra-label"><span>❤️ Vida</span><span>${vidaActual} / ${vida}</span></div>
+                <div class="ficha-barra-label"><span>❤️ Vida</span><span>${enemigoVidaActual} / ${enemigoVidaMax}</span></div>
                 <div class="ficha-barra-bg"><div class="ficha-barra-fill vida" style="width:${pctVida}%"></div></div>
             </div>
             <div class="ficha-descripcion" style="margin:10px 0;font-style:italic;font-size:0.9em;color:#666;">${descripcion}</div>
@@ -1187,10 +1280,15 @@
         document.getElementById('btn-confirmar-modal').disabled = !todosCumplidos;
     });
 
-    function cerrarModal() {
+    function ocultarModal() {
         document.getElementById('modal-overlay').classList.remove('visible');
+    }
+
+    function cerrarModal() {
+        ocultarModal();
         habilidadPendienteId = null;
         itemTiendaPendiente  = null;
+        habilidadUsoPendiente = null;
     }
 
     function confirmarDesbloqueo() {
